@@ -1,16 +1,32 @@
-var $ = require('jquery');
-global.jQuery = $;
 var fs = require('fs'),
-	path = require('path');
-var XLS = require('xlsjs');
+	path = require('path'),
+	ipc  = require('ipc');
 
+var XLS = require('xlsjs'),
+	$ = require('jquery');
+global.jQuery = $;
 var bootstrap = require('bootstrap');
+
 var ps = require('./asc_parser.js'),
 	pt = require('./plot.js');
 
 var doc = document;
 
+var defWinSize = {width: 500, height:500};
+
+var titlebarHeight = 18; // 22
+
 var myPath = ''
+
+ipc.on('async-reply-def-win-size', function(winSize) {
+	defWinSize = winSize;
+	pt.width = winSize.width - $('.list-area').width() - 18;
+	pt.height = winSize.height - $('.toolbar').height() - titlebarHeight;
+});
+
+var getDefaultWindowSize = function() {
+	ipc.send('async-process', 'defaultWindowSize');
+}
 
 var updateFileList = function(myDir) {
 	fs.readdir(myDir, function(err, list) {
@@ -111,6 +127,20 @@ var updatePlot = function(fileName, comm) {
 	});
 };
 
+var updateWindow = function() {
+	console.log('window update');
+	var current_h = $(window).height(),
+		min_h = $('.graph-area').css('min-height').replace('px','') * 1;
+	pt.width_re = $(window).width() - defWinSize.width * 1;
+	console.log(pt.width_re);
+	pt.height_re = current_h - (defWinSize.height - titlebarHeight);
+	if ($('.current').length) {
+		var fname = $('.current').attr('data-asc'),
+			Comm = pt.excelComment;
+			updatePlot(fname, Comm);
+	}
+	$('.graph-area, .asc-list, #main').css('height', (min_h + (current_h - (defWinSize.height - 22))) +'px');
+};
 var showSelectDir = function() {
 	var remote = require('remote')
 	var dialog = remote.require('dialog');
@@ -129,25 +159,24 @@ $('.btn_select_dir').on('click', function() {
 });
 
 $(window).resize(function() {
-	var w = $(window).width(),
-		h = $(window).height(),
-		o_w = 980,
-		o_h = 680 - 22,
-		min_h = $('.graph-area').css('min-height').replace('px','') * 1;
-
-	pt.width_re = w - o_w;
-	pt.height_re = h - o_h;
-	if ($('.current').length) {
-		var fname = $('.current').find('.asc-name').attr('data-asc'),
-			Comm = pt.excelComment;
-			updatePlot(fname, Comm);
-	}
-	$('.graph-area, .asc-list, #main').css('height', (min_h + (h - o_h)) +'px');
+	updateWindow();
 });
 
 $('#chicken').on('click', function() {
 	$('#myModal').modal('show');
 });
 
+$('#chick').on('click', function() {
+	getDefaultWindowSize();
+});
+
+
+defWinSize = getDefaultWindowSize();
+
 myPath = showSelectDir();
 updateFileList(myPath);
+updateWindow();
+
+console.log(defWinSize);
+
+

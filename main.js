@@ -1,5 +1,11 @@
 var app = require('app');  // Module to control application life.
 var BrowserWindow = require('browser-window');  // Module to create native browser window.
+var ipc = require('ipc');
+
+var defaultWindowSize = {
+  width: 980,
+  height: 680 
+}
 
 // Report crashes to our server.
 require('crash-reporter').start();
@@ -22,15 +28,17 @@ app.on('window-all-closed', function() {
 app.on('ready', function() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 980, height: 680,
-    'min-width': 980, 'min-height': 680 
+    width: defaultWindowSize.width,
+    height: defaultWindowSize.height,
+    'min-width': defaultWindowSize.width, 
+    'min-height': defaultWindowSize.height
   });
 
   // and load the index.html of the app.
   mainWindow.loadUrl('file://' + __dirname + '/index.html');
 
   // Open the DevTools.
-  // mainWindow.openDevTools();
+  mainWindow.openDevTools();
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function() {
@@ -40,5 +48,11 @@ app.on('ready', function() {
     mainWindow = null;
   });
 
+});
+
+ipc.on('async-process', function(event, arg) {
+  if (arg == 'defaultWindowSize') {
+    event.sender.send('async-reply-def-win-size', defaultWindowSize);
+  }
 });
 

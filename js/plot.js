@@ -1,5 +1,6 @@
 var d3 = require("d3"),
-jQuery = $ = require('jQuery');
+	ipc = require('ipc'),
+	$ = require('jQuery');
 
 module.exports = {
 
@@ -266,14 +267,22 @@ module.exports = {
 		};
 
 		var containerGroup = svg.append('g').classed('container-group', true);
+		var vline = containerGroup.append('g').classed('vline', true)
+									.attr({transform: 'translate(' + margin.left + ',' + margin.top + ')'})
+									.append('line')
+										.classed('hide', true)
+										.attr({
+											x1: self.Scales.x(1), y1: 30,
+											x2: self.Scales.x(1) , y2: height * 2,
+											stroke: '#ccc', 'stroke-width': 0.5
+										});
 		self.charts.cps = containerGroup
 							.append('g').classed('chart-group cps', true)
-							.attr({width: width + 'px', height: height + 'px'})
 							.attr("transform", "translate(" + margin.left + "," + margin.top + ")");  
 		self.charts.cps.append('rect').attr({
 			width: width + 'px',
 			height: height + 'px',
-			fill: 'rgba(200,200,200,1)'
+			fill: 'rgba(200,200,200,0.0)'
 		});
 		self.charts.delta = containerGroup
 							.append('g')
@@ -287,14 +296,14 @@ module.exports = {
 									transform: 'translate(' + margin.left + ',' + margin.top + ')'
 								});
 
-		var vline = self.charts.cps.append('g').classed('vline', true)
-						.append('line')
-							.classed('hide', true)
-							.attr({
-								x1: self.Scales.x(1), y1: 30,
-								x2: self.Scales.x(1) , y2: height * 2,
-								stroke: '#ccc', 'stroke-width': 0.5
-							});
+		// var vline = self.charts.cps.append('g').classed('vline', true)
+		// 				.append('line')
+		// 					.classed('hide', true)
+		// 					.attr({
+		// 						x1: self.Scales.x(1), y1: 30,
+		// 						x2: self.Scales.x(1) , y2: height * 2,
+		// 						stroke: '#ccc', 'stroke-width': 0.5
+		// 					});
 		var cpsline = self.charts.cps.append('g').classed('line', true);
 		var cpspoint = self.charts.cps.append('g').classed('point', true);
 

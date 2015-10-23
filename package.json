@@ -1,0 +1,10 @@
+{
+  "name": "CBC",
+  "version": "0.1.0",
+  "main": "main.js",
+  "devDependencies": {
+    "d3": "^3.5.6",
+    "jquery": "^2.1.4",
+    "xlsjs": "^0.7.5"
+  }
+}

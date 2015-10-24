@@ -1,6 +1,9 @@
 var fs = require('fs'),
 	path = require('path'),
-	ipc  = require('ipc');
+	ipc  = require('ipc'),
+	remote = require('remote'),
+	dialog = remote.require('dialog');
+	// dialog = require('dialog');
 
 var XLS = require('xlsjs'),
 	$ = require('jquery');
@@ -128,27 +131,27 @@ var updatePlot = function(fileName, comm) {
 };
 
 var updateWindow = function() {
-	console.log('window update');
-	var current_h = $(window).height(),
-		min_h = $('.graph-area').css('min-height').replace('px','') * 1;
+	var min_h = $('.graph-area').css('min-height').replace('px','') * 1,
+		new_height = (min_h + ($(window).height() - (defWinSize.height - 22)));
+
 	pt.width_re = $(window).width() - defWinSize.width * 1;
-	console.log(pt.width_re);
-	pt.height_re = current_h - (defWinSize.height - titlebarHeight);
+	pt.height_re = $(window).height() - (defWinSize.height - titlebarHeight);
+
 	if ($('.current').length) {
 		var fname = $('.current').attr('data-asc'),
 			Comm = pt.excelComment;
 			updatePlot(fname, Comm);
 	}
-	$('.graph-area, .asc-list, #main').css('height', (min_h + (current_h - (defWinSize.height - 22))) +'px');
+	$('.graph-area, .asc-list, #main').css('height', new_height +'px');
 };
+
 var showSelectDir = function() {
-	var remote = require('remote')
-	var dialog = remote.require('dialog');
-	var retval = dialog.showOpenDialog({properties: ['openDirectory']})
+	var retval = dialog.showOpenDialog({properties: ['openDirectory']});
+
 	if (retval == undefined) {
-		return false
+		return false;
 	} else {
-		return retval[0]
+		return retval[0];
 	}
 }
 
@@ -170,13 +173,47 @@ $('#chick').on('click', function() {
 	getDefaultWindowSize();
 });
 
+$('#saveAsSVG').on('click', function() {
+	if ($('svg').length) {
+		var d3 = require('d3');
+		var html = d3.select(d3.select("svg").node().parentNode.cloneNode(true));
 
+		html.select('svg').attr({
+				"title": pt.excelComment,
+				"version": 1.1,
+				"xmlns": "http://www.w3.org/2000/svg",
+				'x': '0px',
+				'y': '0px',
+				'id': 'Layer_1',
+				'viewBox': "0 0 " + pt.width + ' ' + pt.height,
+				'enable-background': "new 0 0 " + pt.width + ' ' + pt.height,
+				"xml:space": 'preserve'
+			});
+		var headers = '<?xml version="1.0" encoding="utf-8"?>'
+					+ '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" '
+					+ '"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">';
+
+		html.select('.current-values').remove();
+		html.select('.vline').remove();
+
+		dialog.showSaveDialog(function(destPath) {
+			if (destPath == undefined) return false;
+
+			destPath += destPath.match(/\.svg$/) ? '' : '.svg';
+			fs.writeFile(destPath, headers + html.node().innerHTML, function(err) {
+				html.remove();
+				if (err) { dialog.showErrorBox("ERROR", "SVG file has not been saved"); }
+			});
+		});
+	}
+});
+
+
+// initialize window
 defWinSize = getDefaultWindowSize();
 
 myPath = showSelectDir();
 updateFileList(myPath);
 updateWindow();
-
-console.log(defWinSize);
 
 

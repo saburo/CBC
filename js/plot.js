@@ -84,6 +84,8 @@ module.exports = {
 					.attr("transform", 'translate(' + this.Scales.x(1) + ', 20)')
 					.attr('text-anchor', 'start')
 					.style({
+						'fill': 'black',
+						'stroke': ' none',
 						"font-size": "12px",
 						'font-family': 'sans-serif'
 					});
@@ -266,7 +268,7 @@ module.exports = {
 			y2: d3.scale.linear().domain(this.getRange(plotData, ['delta'], 5)).range([height,0])
 		};
 
-		var containerGroup = svg.append('g').classed('container-group', true);
+		var containerGroup = svg.append('g').classed('container-group', true).attr('fill', 'none');
 		var vline = containerGroup.append('g').classed('vline', true)
 									.attr({transform: 'translate(' + margin.left + ',' + margin.top + ')'})
 									.append('line')
@@ -292,7 +294,7 @@ module.exports = {
 								.append('rect').attr({
 									width: width + 'px',
 									height: height * 2 + 'px',
-									fill: 'rgba(20, 20, 20, 0.0)',
+									fill: 'rgba(255,255,255,0)',
 									transform: 'translate(' + margin.left + ',' + margin.top + ')'
 								});
 
@@ -369,54 +371,85 @@ module.exports = {
 						.tickSize(-6, -width);
 
 		// make axes
+
+		// defaults for svg exporting
+		axisTextDefault = {fill: 'black', 'stroke': 'none', 'font-family': 'sans-serif', 'font-size': '12px'};
+		axisLineDefault = {fill: 'none', 'stroke': 'black', 'stroke-width': 0.2}; 
+		axisFrameDefault = {fill: 'none', 'stroke': 'black', 'stroke-width': 1}; 
+
+		// CPS Y axis
 		var tmp = this.getRange(plotData, myKeys, 5)
-		self.charts.cps.append("g")
+		var tmpAx = self.charts.cps.append("g")
 				.attr("class", "y axis")
-			.call(yAxis)
-				.append("text")
+				.attr(axisFrameDefault)
+			.call(yAxis);
+		tmpAx.selectAll('text').attr(axisTextDefault);
+		tmpAx.selectAll('line').attr(axisLineDefault);
+
+		// CPS Y label
+		tmpAx.append("text")
 				.attr("y", -30)
 				.attr("x", -height/2)
+				.attr(axisTextDefault)
 				.attr('transform', 'rotate(-90)')
-				.style({"text-anchor": "middle", 'font-size': '18px'})
+				.style({"text-anchor": "middle", 'font-size': '18px', 'font-family': 'sans-serif'})
 				.text('cps');
 
-		self.charts.cps.append("g")
+		// CPS X axis
+		tmpAx = self.charts.cps.append("g")
 				.attr("class", "x axis")
 				.attr("transform", "translate(0," + height + ")")
+				.attr(axisFrameDefault)
 			.call(xAxis);
+		tmpAx.selectAll('line').attr(axisLineDefault);
 
+		// Delta Y axis
 		var y2 = self.charts.delta.append("g")
 				.attr("class", "y axis")
+				.attr(axisFrameDefault)
 			.call(yAxis2);
+		y2.selectAll('text').attr(axisTextDefault);
+		y2.selectAll('line').attr(axisLineDefault);
+
 		var deltaLab = (this.iso == 'C') ? {mass: '13', ele: 'C'} : {mass: '18', ele: 'O'};
 
+		// Delta Y label
 		var y2t = y2.append("text")
 				.attr("y", -30)
 				.attr("x", -height/2)
 				.attr('transform', 'rotate(-90)')
-				.style({"text-anchor": "middle", 'font-size': '18px'});
-			y2t.append('tspan').text('\u03B4').append('tspan').text(deltaLab.mass).attr({'baseline-shift': 'super', 'font-size': '60%'});
-			y2t.append('tspan').text(deltaLab.ele).append('tspan').text('raw').attr({'baseline-shift': 'sub', 'font-size': '60%'});
+				.attr(axisTextDefault)
+				.style({"text-anchor": "middle", 'font-size': '18px', 'font-family': 'sans-serif'});
+		y2t.append('tspan').text('\u03B4').append('tspan').text(deltaLab.mass).attr({'baseline-shift': 'super', 'font-size': '60%'});
+		y2t.append('tspan').text(deltaLab.ele).append('tspan').text('raw').attr({'baseline-shift': 'sub', 'font-size': '60%'});
 
-		self.charts.delta.append("g")
+		// X axis for delta
+		tmpAx = self.charts.delta.append("g")
 				.attr("class", "x axis")
 				.attr("transform", "translate(0," + height + ")")
-			.call(xAxis2)
-				.append('text')
+				.attr(axisFrameDefault)
+			.call(xAxis2);
+		tmpAx.selectAll('text').attr(axisTextDefault);
+		tmpAx.selectAll('line').attr(axisLineDefault);
+
+		// X label
+		tmpAx.append('text')
 				.attr({x: self.Scales.x(parseInt(data.cycleNumber/2 + 1)), y: 28})
+				.attr(axisTextDefault)
 				.style({"text-anchor": "middle", 'font-size': '16px'})
 				.text('cycle #');
+
 		// x (cycle) ticks on upper axis
 		self.charts.delta.append("g")
 				.attr("class", "x axis")
 				.attr("transform", "translate(0,0)")
+				.attr(axisLineDefault)
 			.call(xAxis3);
 
 
 
 		var currentValues = svg.append('g').classed('current-values', true)
 									.attr({
-										// transform: 'translate(' + (margin.left) + ',' + (self.height - 10) +')',
 										transform: 'translate(' + margin.left + ',' + (self.height + self.height_re - 10) +')',
 										'font-size': '12px',
 										'font-family': 'sans-serif',

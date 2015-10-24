@@ -1,6 +1,7 @@
 var app = require('app');  // Module to control application life.
 var BrowserWindow = require('browser-window');  // Module to create native browser window.
 var ipc = require('ipc');
+// var dialog = require('dialog');
 
 var defaultWindowSize = {
   width: 980,

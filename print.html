@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+  <head >
+    <meta charset='utf-8'>
+    <meta http-equiv="Content-Language" content="en">
+    <title>print preview</title>
+
+    <style type="text/css" media="print">
+      @media print {
+        .current-values,
+        .vline {
+          display: none;
+        }
+        svg {
+          page-break-after: always;
+        }
+      }
+
+    </style>
+  </head>
+
+  <body>
+    <div id="print_area"></div>
+    <script>require('./js/print_pdf.js')</script>
+  </body>
+</html>
+

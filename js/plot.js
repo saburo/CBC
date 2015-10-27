@@ -1,5 +1,4 @@
 var d3 = require("d3"),
-	ipc = require('ipc'),
 	$ = require('jQuery');
 
 module.exports = {
@@ -196,7 +195,7 @@ module.exports = {
 		return [d3.min(vlist) - margin, d3.max(vlist) + margin * (1 + legendMargin)];
 	},
 
-	makePlot: function(data) {
+	makePlot: function(svg, data) {
 		var self = this;
 
 		var f01 = d3.format('0.1f'),
@@ -247,10 +246,10 @@ module.exports = {
 			width = this.width + this.width_re - margin.left - margin.right,
 			height = (this.height + this.height_re - margin.top - margin.bottom) / 2; // divide by number of plots
 		self.plotWidth = width;
-		var svg = d3.select("#graph").append("svg")
-					.attr("width", width + margin.left + margin.right)
-					.attr("height", 2 * height + margin.top + margin.bottom)
-					.classed('chart', true);
+		// var svg = d3.select("svg")
+		svg.attr("width", width + margin.left + margin.right)
+			.attr("height", 2 * height + margin.top + margin.bottom)
+			.classed('chart', true);
 
 		if (this.addTitleFlag()) {
 			this.addTitle(svg, (this.excelComment) ? this.excelComment : data.comment);

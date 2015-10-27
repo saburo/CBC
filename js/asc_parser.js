@@ -66,6 +66,11 @@ module.exports = {
 		return l[comIndex][0].trim().replace(/^\"?(.*?)\"?$/, '$1');
 	},
 
+	getAscFileName: function(l) {
+		var sp = l[3][1].split(/\\/);
+		return sp[sp.length - 1].replace(".ais", ".asc");
+	},
+
 	parseAsc: function(asc) {
 		var lines = asc.split('\r\n').map(function(a) {
 			return a.split('\t').map(function(b) {
@@ -74,6 +79,7 @@ module.exports = {
 		});
 		var myKeys = lines.map(function(a) {return a[0].trim();})
 		var comment = this.getComment(myKeys, lines);
+		var fName = this.getAscFileName(lines);
 		var cps = this.getCPS(myKeys, lines);
 		var cycleNumber = cps[Object.keys(cps)[0]].length;
 		var st = this.statCPS(cps);
@@ -82,6 +88,7 @@ module.exports = {
 			cycleNumber: cycleNumber,
 			comment: comment,
 			stat: st,
+			ascName: fName,
 		};
 	},
 

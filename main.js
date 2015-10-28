@@ -6,8 +6,10 @@ var fs = require('fs');
 
 var defaultWindowSize = {
   width: 980,
-  height: 680 
+  height: 680
 }
+
+global.defaultWindowSize = defaultWindowSize;
 
 // Report crashes to our server.
 require('crash-reporter').start();
@@ -30,6 +32,7 @@ app.on('window-all-closed', function() {
 app.on('ready', function() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
+    'use-content-size': true,
     width: defaultWindowSize.width,
     height: defaultWindowSize.height,
     'min-width': defaultWindowSize.width, 
@@ -40,7 +43,7 @@ app.on('ready', function() {
   mainWindow.loadUrl('file://' + __dirname + '/index.html');
 
   // Open the DevTools.
-  // mainWindow.openDevTools();
+  mainWindow.openDevTools();
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function() {
@@ -52,12 +55,6 @@ app.on('ready', function() {
 
 });
 
-ipc.on('async-process', function(event, arg) {
-  if (arg == 'defaultWindowSize') {
-    event.sender.send('async-reply-def-win-size', defaultWindowSize);
-  }
-});;
-
 var printPDF_args = {};
 
 ipc.on('getPrintPDFArgs', function(e, arg) {
@@ -68,6 +65,7 @@ var printWin;
 var savePDFEvent;
 
 ipc.on('saveAsPDF', function(e, arg) {
+  // create invisible window for printing
   savePDFEvent = e,
   printPDF_args = arg;
   printWin = new BrowserWindow({
@@ -75,20 +73,19 @@ ipc.on('saveAsPDF', function(e, arg) {
     height: 100,
     show: false
   });
-
   printWin.on('closed', function() {
     printWin = null;
   });
-  // printWin.openDevTools();
   printWin.loadUrl('file://' + __dirname + '/print.html');
-  // printWin.show()
+  // printWin.openDevTools();
 });
 
 ipc.on('rendering-done', function(e, arg) {
   printWin.webContents.printToPDF({
-    pageSize: 'letter',
-    landscape: true,
-    printBackgrounds: true
+    pageSize: 'Letter',
+    landscape: false,
+    printBackgrounds: true,
+    marginsType: 1
   }, function(err, data) {
     fs.writeFile(printPDF_args.destPath, data, function(err) {
       if(err) alert('genearte pdf error', err)

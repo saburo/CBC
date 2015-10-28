@@ -10,8 +10,13 @@ var fs = require('fs'),
 var myPath = '';
 
 // letter size (landscape)
-pt.width = 72 * 11;
-pt.height =  72 * 8.5;
+pt.width = 72 * 11 * 1.22;
+pt.height =  pt.width * 0.7727272;
+
+pt.height = 72 * 11 * 1.22;
+pt.width =  pt.height * 0.7727272;
+
+console.log('w, h: ', pt.width, ', ', pt.height);
 
 // A4 (landscape)
 // pt.width = 841.89;
@@ -36,7 +41,13 @@ ipc.on('async-reply-getPrintPDFArgs', function(args) {
 			pt.excelComment = o.comment;
 			pt.ascFileName = p.ascName;
 			// add plot
-			pt.makePlot(d3.select('#print_area').append('svg').classed('sep_pages', true), p);
+			var margin = {
+				top: 30,
+				right: 20,
+				bottom: 35, 
+				left: 50
+			};
+			pt.makePlot(d3.select('#print_area').append('svg').classed('sep_pages', true), p, margin);
 			if (lastFname == p.ascName) ipc.send('rendering-done', '');
 		});
 	}

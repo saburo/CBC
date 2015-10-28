@@ -195,7 +195,7 @@ module.exports = {
 		return [d3.min(vlist) - margin, d3.max(vlist) + margin * (1 + legendMargin)];
 	},
 
-	makePlot: function(svg, data) {
+	makePlot: function(svg, data, margin) {
 		var self = this;
 
 		var f01 = d3.format('0.1f'),
@@ -237,7 +237,7 @@ module.exports = {
 
 		this.iso = myKeys[0] == '12C' ? 'C' : 'O';
 
-		var margin = {
+		var margin = margin || {
 				top: this.addTitleFlag() ? 30 : 10,  
 				right: 20,
 				bottom: 60, 

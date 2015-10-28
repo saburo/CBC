@@ -3,7 +3,6 @@ var fs = require('fs'),
 	ipc  = require('ipc'),
 	remote = require('remote'),
 	dialog = remote.require('dialog');
-	// dialog = require('dialog');
 
 var XLS = require('xlsjs');
 global.$ = require('jquery');
@@ -14,20 +13,7 @@ var bootstrap = require('bootstrap');
 var ps = require('./asc_parser.js'),
 	pt = require('./plot.js');
 
-var doc = document;
-
-var defWinSize = {width: 500, height:500};
-
-var titlebarHeight = 18; // 22
-
-var myPath = ''
-
-
-ipc.on('async-reply-def-win-size', function(winSize) {
-	defWinSize = winSize;
-	pt.width = winSize.width - $('.list-area').width() - 18;
-	pt.height = winSize.height - $('.toolbar').height() - titlebarHeight;
-});
+var defWinSize = remote.getGlobal('defaultWindowSize');
 
 ipc.on('async-reply-print-done', function(status) {
 	$('#saveAsPDF').blur();
@@ -140,18 +126,15 @@ var updatePlot = function(fileName, comm) {
 };
 
 var updateWindow = function() {
-	var min_h = $('.graph-area').css('min-height').replace('px','') * 1,
-	new_height = (min_h + ($(window).height() - (defWinSize.height - 22)));
-
-	pt.width_re = $(window).width() - defWinSize.width * 1;
-	pt.height_re = $(window).height() - (defWinSize.height - titlebarHeight);
+	pt.width = $(document).width() - $('#list').width();
+	pt.height = $(document).height() - $('#toolbar').height();
 
 	if ($('.current').length) {
 		var fname = $('.current').attr('data-asc'),
 		Comm = pt.excelComment;
 		updatePlot(fname, Comm);
 	}
-	$('.graph-area, .asc-list, #main').css('height', new_height +'px');
+	$('#graph, #list, .asc-list, #main').css('height', pt.height +'px');
 };
 
 var showSelectDir = function() {
@@ -177,26 +160,6 @@ $('.btn_select_dir').on('click', function() {
 	$(this).blur();
 });
 
-$('#saveAsPDF').on('click', function() {
-	var files = [];
-	dialog.showSaveDialog(function(destPath) {
-		if (destPath == undefined) return false;
-		destPath = (destPath.match(/\.pdf$/)) ? destPath : destPath + '.pdf';
-		$('.asc-file').each(function(d) {
-			files.push({
-				name: $(this).attr('data-asc'),
-				comment: $(this).attr('data-comment')
-			});
-		});
-		var args = {
-			dir: myPath, 
-			Files: files,
-			destPath: destPath,
-		}
-		ipc.send('saveAsPDF', args);
-	});
-
-});
 
 $('#chick').on('click', function() {
 	getDefaultWindowSize();
@@ -219,6 +182,27 @@ $('#frog').on('click', function() {
 	// var win = new BrowserWindow({ width: 800, height: 600 });
 	// win.loadUrl('https://github.com');
 	$(this).blur();
+});
+
+$('#saveAsPDF').on('click', function() {
+	var files = [];
+	dialog.showSaveDialog(function(destPath) {
+		if (destPath == undefined) return false;
+		destPath = (destPath.match(/\.pdf$/)) ? destPath : destPath + '.pdf';
+		$('.asc-file').each(function(d) {
+			files.push({
+				name: $(this).attr('data-asc'),
+				comment: $(this).attr('data-comment')
+			});
+		});
+		var args = {
+			dir: myPath, 
+			Files: files,
+			destPath: destPath,
+		}
+		ipc.send('saveAsPDF', args);
+	});
+
 });
 
 $('#saveAsSVG').on('click', function() {
@@ -259,7 +243,8 @@ $('#saveAsSVG').on('click', function() {
 
 
 // initialize window
-defWinSize = getDefaultWindowSize();
+// pt.width = defWinSize.width - $('.list-area').width() - 18;
+// pt.height = defWinSize.height - $('.toolbar').height();
 
 myPath = showSelectDir();
 updateFileList(myPath);

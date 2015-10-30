@@ -121,7 +121,7 @@ var updatePlot = function(fileName, comm) {
 		p = ps.parseAsc(data);
 		if (comm) pt.excelComment = comm;
 		pt.ascFileName = fileName;
-		pt.makePlot(d3.select('svg'), p);
+		pt.makePlot(d3.select('svg'), p, ['cps','delta', 'hydrite']);
 	});
 };
 

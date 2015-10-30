@@ -1,38 +1,48 @@
 <!DOCTYPE html>
 <html lang="en" class="">
-  <head >
-    <meta charset='utf-8'>
-    <meta http-equiv="Content-Language" content="en">
-    <title>print preview</title>
+<head >
+  <meta charset='utf-8'>
+  <meta http-equiv="Content-Language" content="en">
+  <title>print preview</title>
 
-    <style type="text/css" media="print">
-      @media print {
-        .current-values,
-        .vline {
-          display: none;
-        }
-        svg {
-          page-break-after: always;
-        }
-        .sep_pages {
-          page-break-before: always;
-        }
-        #print_area {
-          margin: 0;
-          padding: 0;
-        }
-        body {
-          padding: 0;
-          margin: 0;
-        }
+  <style type="text/css" media="print">
+    @media print {
+      .current-values,
+      .vline {
+        display: none;
       }
+      svg {
+        font-family: Helvetica, sans-serif;
+      }
+      .sep_pages {
+        page-break-before: always;
+      }
+      #print_area {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        padding: 0;
+        margin: 0;
+      }
+      .axis text {
+        font: 12px sans-serif;
+      }
+      .axis path,
+      .axis line {
+        fill: none;
+        stroke: #000;
+        stroke-width: 1.2;
+        shape-rendering: crispEdges;
+      }
+    }
 
-    </style>
-  </head>
+  </style>
+</head>
 
-  <body>
-    <div id="print_area"></div>
-    <script>require('./js/print_pdf.js')</script>
-  </body>
+<body>
+  <div id="print_area"></div>
+  <script>require('./js/print_pdf.js')</script>
+</body>
 </html>
 

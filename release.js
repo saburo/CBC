@@ -10,7 +10,7 @@ packager({
     arch: 'x64',
     version: '0.34.1',
     // version: '0.30.0',
-    icon: './wiscsims.icns', //<- アプリアイコン
+    icon: './img/icon', //<- アプリアイコン
  
     'app-bundle-id': 'edu.wisc.geology.wiscsims', //<- 自分のドメインなどを使用してください
  
@@ -19,7 +19,7 @@ packager({
     overwrite: true,
     asar: false,
     prune: false,
-    ignore: "release\.js|\.DS_Store|node_modules/\.bin",
+    ignore: "node_modules/(electron-packager|electron-prebuilt|\.bin)|release\.js|\.DS_Store",
     'version-string': {
         CompanyName: 'WiscSIMS',
         FileDescription: 'Cycle-by-cycle plot maker for WiscSIMS',

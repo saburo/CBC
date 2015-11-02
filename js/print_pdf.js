@@ -10,13 +10,13 @@ var fs = require('fs'),
 var myPath = '';
 
 // letter size (landscape)
-pt.width = 72 * 11 * 1.22;
-pt.height =  pt.width * 0.7727272;
+// pt.width = 72 * 11 * 1.22;
+// pt.height =  pt.width * 0.7727272;
 
-pt.height = 72 * 11 * 1.22;
-pt.width =  pt.height * 0.7727272;
+// pt.height = 72 * 11 * 1.22;
+// pt.width =  pt.height * 0.7727272;
 
-console.log('w, h: ', pt.width, ', ', pt.height);
+// console.log('w, h: ', pt.width, ', ', pt.height);
 
 // A4 (landscape)
 // pt.width = 841.89;
@@ -30,9 +30,30 @@ ipc.on('async-reply-getPrintPDFArgs', function(args) {
         p = '',
         lastFname = args.Files[args.Files.length-1].name;
 
+    var adjust = 1.22,
+        dpi = 72,
+        sizeL = 0,
+        sizeS = 0;
+
+    if (args.paperSize === 'A4') {
+        sizeL = 11.7, sizeS = 8.3; // in inches
+    } else if (args.paperSize === 'Letter') {
+        sizeL = 11, sizeS = 8.5; // in inches
+    }
+
+    if (args.orientation === 'portrait') {
+        pt.width = dpi * sizeS * adjust;
+        pt.height = dpi * sizeL * adjust; 
+    } else if (args.orientation === 'landscape') {
+        pt.width = dpi * sizeL * adjust;
+        pt.height = dpi * sizeS * adjust; 
+    }
+
     var myList = {};
+    var total = args.Files.length;
     for (i in args.Files) {
         myList[args.Files[i].name] = args.Files[i];
+        ipc.send('current-rendering', {val: Math.round(80 *(i/1 + 1) / total) });
 
         fs.readFile(path.join(myPath, args.Files[i].name), 'utf8', function(err, data) {
             if (err) throw err;
@@ -47,8 +68,10 @@ ipc.on('async-reply-getPrintPDFArgs', function(args) {
                 bottom: 35, 
                 left: 70
             };
-            pt.makePlot(d3.select('#print_area').append('svg').classed('sep_pages', true), p,  ['cps','delta', 'hydrite'], margin, true);
-            if (lastFname == p.ascName) ipc.send('rendering-done', '');
+            pt.makePlot(d3.select('#print_area').append('svg').classed('sep_pages', true), 
+                        p,  
+                        ['cps','delta', 'hydrite'], margin, true);
+            if (lastFname == p.ascName) ipc.send('rendering-done', args);
         });
     }
 });

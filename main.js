@@ -1,3 +1,5 @@
+"use strict";
+
 var app = require('app');  // Module to control application life.
 var BrowserWindow = require('browser-window');  // Module to create native browser window.
 var ipc = require('ipc');
@@ -10,6 +12,7 @@ var defaultWindowSize = {
 }
 
 global.defaultWindowSize = defaultWindowSize;
+global.saveProgress = 0;
 
 // Report crashes to our server.
 require('crash-reporter').start();
@@ -64,6 +67,7 @@ ipc.on('getPrintPDFArgs', function(e, arg) {
 var printWin;
 var savePDFEvent;
 
+
 ipc.on('saveAsPDF', function(e, arg) {
     // create invisible window for printing
     savePDFEvent = e,
@@ -80,13 +84,19 @@ ipc.on('saveAsPDF', function(e, arg) {
     // printWin.openDevTools();
 });
 
+ipc.on('current-rendering', function(e, arg) {
+    global.saveProgress = arg.val;
+});
+
 ipc.on('rendering-done', function(e, arg) {
+    global.saveProgress = 90;
     printWin.webContents.printToPDF({
-        pageSize: 'Letter',
-        landscape: false,
+        pageSize: arg.paperSize,
+        landscape: arg.orientation === 'landscape',
         printBackgrounds: true,
         marginsType: 1
     }, function(err, data) {
+        global.saveProgress = 99;
         fs.writeFile(printPDF_args.destPath, data, function(err) {
             if(err) alert('genearte pdf error', err)
             savePDFEvent.sender.send('async-reply-print-done', true);

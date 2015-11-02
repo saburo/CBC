@@ -26,7 +26,9 @@ module.exports = {
 
     data: {},
 
-    circleSize: 6, 
+    circleSize: 6,
+
+    printFlag: false, 
 
     iso: 'C',
 
@@ -177,9 +179,10 @@ module.exports = {
 
         if (avLine.empty()) {
             avLine = obj.append('g').append('line').classed('average-line', true);
+            var yVal= (self.printFlag) ? stat.mean : stat.min
             avLine.attr({
                 x1: self.scale[t].x(1), x2: self.scale[t].x(l),
-                y1: self.scale[t].y(stat.min), y2: self.scale[t].y(stat.min),
+                y1: self.scale[t].y(yVal), y2: self.scale[t].y(yVal),
                 fill: 'none',
                 stroke: self.config.color[t],
                 'stroke-width': 1,
@@ -289,6 +292,7 @@ module.exports = {
         this.config = this.isotopeSysConfig(this.checkIsoSys(data));
         this.stat = data.stat;
         this.data['plotData'] = this.makePlotData(data);
+        this.printFlag = printFlag || false;
 
         var self = this;
         var margin = margin || {
@@ -329,12 +333,13 @@ module.exports = {
                     'stroke-width': 0.5
                 });
 
-            var maskedArea = container.append('g').append('rect').attr({
-                    height: plotType.length * height,
-                    width: 0, 
-                    transform: 'translate(' + margin.left + ',' + margin.top + ')',
-                    fill: 'rgba(240,240,240,.3)'
-                });
+            var maskedArea = container.append('g').classed('masked-area', true)
+                            .append('rect').attr({
+                                height: plotType.length * height,
+                                width: 0, 
+                                transform: 'translate(' + margin.left + ',' + margin.top + ')',
+                                fill: 'rgba(240,240,240,.3)'
+                            });
         }
 
         var plots = {},
@@ -408,7 +413,7 @@ module.exports = {
 
         if (!printFlag) {
 
-            var mouseReceiver = container.append('g').append('rect').attr({
+            var mouseReceiver = container.append('g').classed('mouse-receiver', true).append('rect').attr({
                 transform: 'translate(' + margin.left + ',' + margin.top + ')',
                 width: width,
                 height: plotType.length * height,

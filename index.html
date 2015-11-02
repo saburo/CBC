@@ -12,10 +12,21 @@
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title" id="PrintConfigLabel">Configurations</h4>
+          <h4 class="modal-title" id="PrintConfigLabel">Export Preferences</h4>
         </div>
         <div class="modal-body">
         <form class="form-horizontal">
+          <div class="form-group">
+            <label for="fileformat" class="control-label col-sm-3">Format:</label>
+            <div class="col-sm-9">
+              <label class="radio-inline format">
+                <input type="radio" name="fileformat" id="fileformatPDF" value="pdf" checked> PDF
+              </label>
+              <label class="radio-inline format">
+                <input type="radio" name="fileformat" id="fileformatSVG" value="svg"> SVG
+              </label>
+            </div>
+          </div>
           <div class="form-group">
             <label for="pages" class="control-label col-sm-3">Pages:</label>
             <div class="col-sm-9">
@@ -27,7 +38,7 @@
               </label>
             </div>
           </div>
-          <div class="form-group">
+          <div class="form-group orientation">
             <label for="paperOrientations" class="control-label col-sm-3">Orientation:</label>
             <div class="col-sm-9">
               <label class="radio-inline paper-orientation">
@@ -55,8 +66,8 @@
           <div class="col-sm-1"></div>
           <div class="col-sm-10">
             <div class="progress progress-striped">
-              <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
-                60%
+              <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 0%;" id="progress-bar">
+                0%
               </div>
             </div>
           </div>
@@ -64,17 +75,15 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" id="print-btn">Save as PDF...</button>
+        <button type="button" class="btn btn-primary" id="print-btn">Export...</button>
       </div>
     </div>
   </div>
 </div>
 <div id="toolbar" class="toolbar">
-  <button type="button" class="btn btn-default toolbar-btn btn_select_dir">Select Folder</button>
-  <button type="button" class="btn btn-default toolbar-btn" id="chick">🐤</button>
-  <button type="button" class="btn btn-default toolbar-btn" id="frog">🐸</button>
-  <button type="button" class="btn btn-default toolbar-btn" id="saveAsPDF">Save as PDF</button>
-  <button type="button" class="btn btn-default toolbar-btn" id="saveAsSVG">Save as SVG</button>
+  <button type="button" class="btn btn-default toolbar-btn preference-btn" id="preference"><span class="glyphicon glyphicon-cog"></span> Preferences</button>
+  <button type="button" class="btn btn-default toolbar-btn export-btn" id="exportas"><span class="glyphicon glyphicon-save"></span> Export as...</button>
+  <button type="button" class="btn btn-default toolbar-btn select-dir-btn pull-right"><span class="glyphicon glyphicon-folder-open"></span>  Select Folder...</button>
 </div>
 <div id="main" class="main">
   <div id="graph" class="graph-area"><svg></svg></div>

@@ -42,12 +42,12 @@ ipc.on('async-reply-getPrintPDFArgs', function(args) {
 			pt.ascFileName = p.ascName;
 			// add plot
 			var margin = {
-				top: 30,
+				top: 60,
 				right: 20,
 				bottom: 35, 
-				left: 50
+				left: 70
 			};
-			pt.makePlot(d3.select('#print_area').append('svg').classed('sep_pages', true), p, margin);
+			pt.makePlot(d3.select('#print_area').append('svg').classed('sep_pages', true), p,  ['cps','delta', 'hydrite'], margin, true);
 			if (lastFname == p.ascName) ipc.send('rendering-done', '');
 		});
 	}

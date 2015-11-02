@@ -110,6 +110,10 @@ body {
 	background: #fff;
 }
 
+body {
+	font-family: Helvetica, sans-serif;
+}
+
 @media print {
 	.toolbar,
 	.list-area,

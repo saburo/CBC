@@ -26,7 +26,9 @@ module.exports = {
 
     data: {},
 
-    circleSize: 6, 
+    circleSize: 6,
+
+    printFlag: false, 
 
     iso: 'C',
 
@@ -177,9 +179,10 @@ module.exports = {
 
         if (avLine.empty()) {
             avLine = obj.append('g').append('line').classed('average-line', true);
+            var yVal= (self.printFlag) ? stat.mean : stat.min
             avLine.attr({
                 x1: self.scale[t].x(1), x2: self.scale[t].x(l),
-                y1: self.scale[t].y(stat.min), y2: self.scale[t].y(stat.min),
+                y1: self.scale[t].y(yVal), y2: self.scale[t].y(yVal),
                 fill: 'none',
                 stroke: self.config.color[t],
                 'stroke-width': 1,
@@ -212,9 +215,9 @@ module.exports = {
         return {
             mean:   d3.mean(v), 
             stdev2: d3.deviation(v) * 2,
-            se2:    d3.deviation(v) / Math.sqrt(v.length),
-            min:    d3.min(v),
-            max:    d3.max(v)
+            se2:  d3.deviation(v) / Math.sqrt(v.length),
+            min:  d3.min(v),
+            max:  d3.max(v)
         };
     },
 
@@ -289,6 +292,7 @@ module.exports = {
         this.config = this.isotopeSysConfig(this.checkIsoSys(data));
         this.stat = data.stat;
         this.data['plotData'] = this.makePlotData(data);
+        this.printFlag = printFlag || false;
 
         var self = this;
         var margin = margin || {
@@ -320,7 +324,6 @@ module.exports = {
                     transform: 'translate(' + margin.left + ',' + margin.top + ')',
                     width: width,
                     height: plotType.length * height,
-                    // fill: 'rgba(200,255,200,0.3)'
                 }).append('line').classed('vline hide', true).attr({
                     x1: 0, x2: 0,
                     y1: 0, y2: plotType.length * height,
@@ -329,12 +332,13 @@ module.exports = {
                     'stroke-width': .2
                 });
 
-            var maskedArea = container.append('g').append('rect').attr({
-                    height: plotType.length * height,
-                    width: 0, 
-                    transform: 'translate(' + margin.left + ',' + margin.top + ')',
-                    fill: 'rgba(255,0,0,0.1)'
-                });
+            var maskedArea = container.append('g').classed('masked-area', true)
+                            .append('rect').attr({
+                                height: plotType.length * height,
+                                width: 0, 
+                                transform: 'translate(' + margin.left + ',' + margin.top + ')',
+                                fill: 'rgba(255,0,0,0.1)'
+                            });
         }
 
         var plots = {},
@@ -409,8 +413,7 @@ module.exports = {
         });
 
         if (!printFlag) {
-            var vline
-            var mouseReceiver = container.append('g').append('rect').attr({
+            var mouseReceiver = container.append('g').classed('mouse-receiver', true).append('rect').attr({
                 transform: 'translate(' + margin.left + ',' + margin.top + ')',
                 width: width,
                 height: plotType.length * height,
@@ -449,6 +452,7 @@ module.exports = {
                 vline.attr({x1: x, x2: x});
                 self.updateCurrentValue(parseInt(self.scale[t].x.invert(x), 10));
             });
+
             mouseReceiver.on('dblclick', function() {
                 if (self.isHover(this)) return;
                 self.maskedData = [];
@@ -459,7 +463,6 @@ module.exports = {
                     self.addAverageLine(plots[t], t);
                 });
             });
-
 
             // data masking
             var dragstarted = function(d) {
@@ -548,7 +551,6 @@ module.exports = {
             }
             return;
         }
-
         self.plotType.forEach(function(v, i) {
             plotObj[v].selectAll('.connLines').remove();
             self.drawConnLine(plotObj[v], v);

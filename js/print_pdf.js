@@ -62,15 +62,14 @@ ipc.on('async-reply-getPrintPDFArgs', function(args) {
             pt.excelComment = o.comment;
             pt.ascFileName = p.ascName;
             // add plot
-            var margin = {
-                top: 60,
-                right: 20,
-                bottom: 35, 
-                left: 70
-            };
-            pt.makePlot(d3.select('#print_area').append('svg').classed('sep_pages', true), 
-                        p,  
-                        ['cps','delta', 'hydrite'], margin, true);
+            // var margin = {
+            //     top: 60,
+            //     right: 20,
+            //     bottom: 35, 
+            //     left: 70
+            // };
+            var svg = d3.select('#print_area').append('svg').classed('sep_pages', true);
+            pt.makePlot(svg, p, args.plotOptions);
             if (lastFname == p.ascName) ipc.send('rendering-done', args);
         });
     }

@@ -22,13 +22,19 @@ module.exports = {
 
     stat: {},
 
-    plotType: [],
+    plotType: ['cps', 'delta'],
 
     data: {},
 
     circleSize: 6,
 
     printFlag: false, 
+
+    titleFlag: true,
+
+    titleContents: ['comment'],
+
+    averages: ['hydrite', 'delta'],
 
     iso: 'C',
 
@@ -284,18 +290,21 @@ module.exports = {
         return obj.append('g').attr(attr).call(Axis);
     },
 
-    makePlot: function(svg, data, plotType, margin, printFlag) {
-
-        this.maskedData = [];
-        this.data = data;
-        this.plotType = plotType;
+    // makePlot: function(svg, data, plotType, margin, printFlag, options) {
+    makePlot: function(svg, data, options) {
         this.config = this.isotopeSysConfig(this.checkIsoSys(data));
-        this.stat = data.stat;
+        this.data = data;
         this.data['plotData'] = this.makePlotData(data);
-        this.printFlag = printFlag || false;
+        this.stat = data.stat;
+
+        this.plotType = options.plotType || this.plotType;
+        this.printFlag = options.printFlag || this.printFlag;
+        this.maskedData = options.maskedData || this.maskedData;
+        this.titleContents = options.titleContents || this.titleContents;
+        this.averages = options.averages || this.averages;
 
         var self = this;
-        var margin = margin || {
+        var margin = options.margin || {
                 top: 30,  
                 // top: 70,  
                 right: 20,
@@ -303,18 +312,16 @@ module.exports = {
                 left: 60
             },
             width = this.width - margin.left - margin.right,
-            height = (this.height - margin.top - margin.bottom) / plotType.length; // divide by number of plots
+            height = (this.height - margin.top - margin.bottom) / self.plotType.length; // divide by number of plots
         this.margin = margin;
-
-        printFlag = printFlag || false;
 
         var container = svg.append('g').classed('chart-frame', true)
             svg.attr({
                 width: width + margin.left + margin.right,
-                height: plotType.length * height + margin.top + margin.bottom
+                height: self.plotType.length * height + margin.top + margin.bottom
             });
 
-        if (!printFlag) {
+        if (!self.printFlag) {
             var currentVal = svg.append('g').classed('current-values', true).attr({
                         'font-size': '11px',
                         'text-anchor': 'start',
@@ -323,10 +330,10 @@ module.exports = {
             var vline = container.append('g').attr({
                     transform: 'translate(' + margin.left + ',' + margin.top + ')',
                     width: width,
-                    height: plotType.length * height,
+                    height: self.plotType.length * height,
                 }).append('line').classed('vline hide', true).attr({
                     x1: 0, x2: 0,
-                    y1: 0, y2: plotType.length * height,
+                    y1: 0, y2: self.plotType.length * height,
                     fill: 'none',
                     stroke: 'rgba(255,0,255,0.8)',
                     'stroke-width': .2
@@ -334,7 +341,7 @@ module.exports = {
 
             var maskedArea = container.append('g').classed('masked-area', true)
                             .append('rect').attr({
-                                height: plotType.length * height,
+                                height: self.plotType.length * height,
                                 width: 0, 
                                 transform: 'translate(' + margin.left + ',' + margin.top + ')',
                                 fill: 'rgba(255,0,0,0.1)'
@@ -344,12 +351,13 @@ module.exports = {
         var plots = {},
             x = 0, y = 0;
             // plotData = this.makePlotData(data);
-
-        self.addTitle(svg);
+        if (self.titleContents.length) {
+            self.addTitle(svg);
+        }
 
         // Main loop
-        for (var i in plotType) {
-            var t = plotType[i];
+        for (var i in self.plotType) {
+            var t = self.plotType[i];
 
             // Create scales
             this.scale[t] = {
@@ -366,10 +374,11 @@ module.exports = {
                         width: width,
                         height: height,
                     });
+            if (self.averages.indexOf(t) >= 0) {
+                this.addAverageLine(plots[t], t);
+            }
 
-            this.addAverageLine(plots[t], t);
-
-            var lastFlag = (parseInt(i) === (parseInt(plotType.length) - 1)) ? true : false;
+            var lastFlag = (parseInt(i) === (parseInt(self.plotType.length) - 1)) ? true : false;
             // Create Axis bases
             var xAxis = this.makeAxis(plots[t], 'x', this.scale[t].x, height, lastFlag);
             var yAxis = this.makeAxis(plots[t], 'y', this.scale[t].y, width);
@@ -412,11 +421,11 @@ module.exports = {
             'font-size': '14px',
         });
 
-        if (!printFlag) {
+        if (!self.printFlag) {
             var mouseReceiver = container.append('g').classed('mouse-receiver', true).append('rect').attr({
                 transform: 'translate(' + margin.left + ',' + margin.top + ')',
                 width: width,
-                height: plotType.length * height,
+                height: self.plotType.length * height,
                 fill: 'rgba(255,255,255,0)'
             });
 
@@ -460,7 +469,9 @@ module.exports = {
                 self.plotType.map(function(t) {
                     plots[t].selectAll('.connLines').remove();
                     self.drawConnLine(plots[t], t);
-                    self.addAverageLine(plots[t], t);
+                    if (self.averages.indexOf(t) >= 0) {
+                        self.addAverageLine(plots[t], t);
+                    }
                 });
             });
 
@@ -488,7 +499,6 @@ module.exports = {
             };
             var dragended = function() {
                 if (startPointX < 0) return;
-
                 var currentX = self.getCurrentX(this);
                 currentX = (currentX < 1) ? 1 : currentX; 
                 var current = self.scale.x(currentX);
@@ -509,7 +519,18 @@ module.exports = {
 
             mouseReceiver.call(drag);
         }
-        if (printFlag) console.log(self.ascFileName);
+
+        if (self.maskedData.length) {
+            var p = d3.selectAll('.point');
+            self.maskedData.forEach(function(cycle) {
+                p.selectAll('g').forEach(function(v, j) {
+                    d3.select(v[cycle - 1]).selectAll('circle')
+                        .classed('masked', true);
+                });
+            });
+        }
+
+        if (self.printFlag) console.log(self.ascFileName);
     },
 
     maskData: function(obj, range, plotObj) {
@@ -554,7 +575,9 @@ module.exports = {
         self.plotType.forEach(function(v, i) {
             plotObj[v].selectAll('.connLines').remove();
             self.drawConnLine(plotObj[v], v);
-            self.addAverageLine(plotObj[v], v);
+            if (self.averages.indexOf(v) >= 0) {
+                self.addAverageLine(plotObj[v], v);
+            }
         });
     },
 

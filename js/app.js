@@ -1,19 +1,21 @@
 "use strict";
 
 var fs = require('fs'),
-path = require('path'),
-ipc  = require('ipc'),
-remote = require('remote'),
-dialog = remote.require('dialog');
+    path = require('path'),
+    ipc  = require('ipc'),
+    remote = require('remote'),
+    dialog = remote.require('dialog');
 
 var XLS = require('xlsjs');
 global.$ = require('jquery');
 global.jQuery = global.$;
 
+require('jquery-ui/sortable');
+
 var bootstrap = require('bootstrap');
 
-var ps = require('./asc_parser.js'),
-pt = require('./plot.js');
+var ps = require('./asc_parser'),
+pt = require('./plot');
 
 var defWinSize = remote.getGlobal('defaultWindowSize');
 var myPath = '';
@@ -29,7 +31,7 @@ ipc.on('async-reply-print-done', function(status) {
         $('.myspacer').removeClass('hide');
         $('#progressbar').addClass('hide');
         $('.progress').removeClass('active');
-        $('#myModal').modal('hide');
+        $('#exportModal').modal('hide');
     }, 1000);
 });
 
@@ -66,7 +68,7 @@ var updateFileList = function(myDir) {
             $('.current').removeClass('current');
             $(this).addClass('current');
             updatePlot($(this).attr('data-asc'),
-                     $(this).attr('data-comment'));
+                     $(this).attr('data-comment'), []);
         });
     });
 };
@@ -125,16 +127,34 @@ var getComment = function(filename) {
     return p.comment;
 };
 
-var updatePlot = function(fileName, comm) {
+var getConfig = function(param) {
+    var out = [];
+    var checked = $('.' + param + ' input:checked');
+    for (var i=0; i<checked.length; i++) {
+        out.push($(checked[i]).val());
+    }
+    return out;
+};
+
+var updatePlot = function(fileName, comm, mask) {
     var p = '';
     var d3 = require('d3');
     $('svg').html('');
+    var options = {
+        plotType: getConfig('plottypes'),
+        printFlag: false,
+        titleContents: getConfig('titles'),
+        averages: getConfig('averages'),
+        maskedData: mask || pt.maskedData,
+        margin: undefined, 
+    };
+
     fs.readFile(path.join(myPath, fileName), 'utf8', function(err, data) {
         if (err) throw err;
         p = ps.parseAsc(data);
         if (comm) pt.excelComment = comm;
         pt.ascFileName = fileName;
-        pt.makePlot(d3.select('svg'), p, ['cps','delta', 'hydrite']);
+        pt.makePlot(d3.select('svg'), p, options);
     });
 };
 
@@ -169,6 +189,7 @@ var saveAsPDF = function () {
         $('.progress').addClass('active');
         var files = [];
         destPath = (destPath.match(/\.pdf$/)) ? destPath : destPath + '.pdf';
+        var mask = [];
         if($('.pages > input:checked').val() === 'all') {
             $('.asc-file').each(function(d) {
                 files.push({
@@ -176,7 +197,9 @@ var saveAsPDF = function () {
                     comment: $(this).attr('data-comment')
                 });
             });
+
         } else {
+            // single page
             var curr = $('.current');
             if (curr.length === 0) {
                 alert('select file');
@@ -186,13 +209,25 @@ var saveAsPDF = function () {
                 name: $('.current') .attr('data-asc'),
                 comment: $('.current') .attr('data-comment'),
             });
+            if ($('#datamasking').prop('checked')) {
+                mask = pt.maskedData;
+            }
         }
         var args = {
             dir: myPath, 
             Files: files,
             destPath: destPath,
             paperSize: $('#paperSize > option:selected').val(),
-            orientation: $('.paper-orientation > input:checked').val() 
+            orientation: $('.paper-orientation > input:checked').val(),
+            plotOptions: {
+                plotType: getConfig('plottypes'),
+                printFlag: true,
+                titleContents: getConfig('titles'),
+                averages: getConfig('averages'),
+                // maskedData: mask || pt.maskedData,
+                maskedData: mask, 
+                margin: {top: 60, right: 20, bottom: 35, left: 70},
+            }
         }
         updateSaveProgress();
         ipc.send('saveAsPDF', args);
@@ -280,8 +315,13 @@ $('.select-dir-btn').on('click', function() {
 });
 
 $('#exportas').on('click', function() {
-    $('#myModal').modal('show');
+    $('#exportModal').modal('show');
 });
+
+$('#preference').on('click', function() {
+    $('#configModal').modal('show');
+});
+
 
 $('#print-btn').on('click', function() {
     if ($('.format > input:checked').val() === 'pdf') {
@@ -289,6 +329,12 @@ $('#print-btn').on('click', function() {
     } else {
         saveAsSVG();
     }
+    $(this).blur();
+});
+
+$('#save-config-btn').on('click', function() {
+    updateWindow();
+    $('#configModal').modal('hide');
     $(this).blur();
 });
 
@@ -306,6 +352,17 @@ $('#fileformatPDF').on('click', function() {
     $('.paper-size').prop('disabled', false);
 });
 
+$('#pageCurrent').on('click', function() {
+    $('#datamasking').prop('disabled', false);
+});
+
+$('#pageAll').on('click', function() {
+    $('#datamasking').prop('disabled', true);
+});
+
+$('.plottypes').sortable();
+$('.plottypes').disableSelection();
+
 // initialize window
 // pt.width = defWinSize.width - $('.list-area').width() - 18;
 // pt.height = defWinSize.height - $('.toolbar').height();
@@ -313,8 +370,8 @@ $('#fileformatPDF').on('click', function() {
 
 /**** Main routine (init) ****/
 
-// myPath = '/Users/saburo/Desktop/R/TEST_SIMS_DATA/20140624_d18O_garnet_stds_Kouki';
-myPath = showSelectDir();
+myPath = '/Users/saburo/Desktop/R/TEST_SIMS_DATA/20140624_d18O_garnet_stds_Kouki';
+// myPath = showSelectDir();
 updateFileList(myPath);
 updateWindow();
 

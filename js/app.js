@@ -6,7 +6,8 @@ var fs = require('fs'),
     remote = require('remote'),
     dialog = remote.require('dialog');
 
-var XLS = require('xlsjs');
+var XLS = require('xlsx');
+// var XLS = require('xlsjs');
 global.$ = require('jquery');
 global.jQuery = global.$;
 
@@ -19,6 +20,8 @@ pt = require('./plot');
 
 var defWinSize = remote.getGlobal('defaultWindowSize');
 var myPath = '';
+var searchBase = [];
+var excelMultiFlag = [];
 
 
 /**** IPCs ****/
@@ -37,20 +40,29 @@ ipc.on('async-reply-print-done', function(status) {
 
 
 /**** Functions ****/
+RegExp.escape = function( value ) {
+     return value.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, "\\$&");
+};
 
-var updateFileList = function(myDir) {
+var updateFileList = function(myDir, myExcel) {
+    $('#asc-list').html('<li class="asc-file">Loading...</li>');
     fs.readdir(myDir, function(err, list) {
         var ExcelCommentFlag = 1,
         myListItems = [],
         ascList = getASCList(list),
-        excelComments = ExcelCommentFlag ? getExcelCommentList(list): false,
+        excelComments = ExcelCommentFlag ? getExcelCommentList(list, myExcel): false,
         Comm = '',
         content = [],
         item = '',
         i = 0;
-
+        searchBase = [];
         for (i in ascList) {
-            Comm = excelComments ? excelComments[ascList[i]] : getComment(path.join(myDir, ascList[i]));
+            if (excelComments.hasOwnProperty(ascList[i])) {
+                Comm = excelComments[ascList[i]];
+            } else {
+                Comm = '[A] ' + getComment(path.join(myDir, ascList[i]));
+            }
+            // Comm = excelComments ? excelComments[ascList[i]] : getComment(path.join(myDir, ascList[i]));
             content = [];
             content.push($('<p/>').addClass('asc-file-comment').text(Comm));
             content.push($('<p/>').addClass('asc-file-name').text(ascList[i]));
@@ -60,6 +72,7 @@ var updateFileList = function(myDir) {
                 'data-asc': ascList[i],
                 'data-comment': Comm
             });
+            searchBase.push(ascList[i] + ' ' + Comm);
             item.append(content);
             myListItems.push(item);
         }
@@ -70,6 +83,17 @@ var updateFileList = function(myDir) {
             updatePlot($(this).attr('data-asc'),
                      $(this).attr('data-comment'), []);
         });
+        if (excelMultiFlag.length > 0) {
+            var options = [];
+            excelMultiFlag.forEach(function(v) {
+                options.push($('<option/>').attr('value', v).text(v))
+            });
+            var myModal = $('#selectExcelModal .modal-body');
+            myModal.html('').append($('<select/>').attr('id', 'commentExcel').addClass('form-control').append(options));
+            $('#selectExcelModal').modal({
+                show: true
+            })
+        }
     });
 };
 
@@ -88,34 +112,54 @@ var getASCList = function(list) {
     });
 };
 
-var getExcelCommentList = function(list) {
+var getExcelCommentList = function(list, excelPath) {
     var pattern = /\.xls$/,
-    mySpreadSheet = [],
-    sheetIndex = -1,
-    wb = '',
-    i = 2,
-    myComments = {};
-
-    mySpreadSheet = list.filter(function(f) {
-        if (f.match(pattern)) {
-            sheetIndex = XLS.readFile(path.join(myPath, f))
-            .SheetNames.indexOf('Sum_table');
-            if ( sheetIndex >= 0) return true;
-        }
-        return false;
+        mySpreadSheet = [],
+        sheetIndex = -1,
+        wb = '',
+        i = 2,
+        myComments = {};
+    var ascPattern = /\.asc$/;
+    var ascList = list.filter(function(f) {
+        return f.match(ascPattern);
     });
-    if (mySpreadSheet.length == 1) {
-        wb = XLS.readFile(path.join(myPath, mySpreadSheet[0])).Sheets['Sum_table'];
+    var parseExcelComments = function(sheetPath) {
+        // path = path.join(myPath, mySpreadSheet[0]);
+        var comments = {};
+        wb = XLS.readFile(sheetPath).Sheets['Sum_table'];
         for (i=2; i<= wb['!range'].e.r; i++) {
             if (wb.hasOwnProperty('A'+i)) {
-                myComments[wb['A'+i].v] = wb['B'+i].v;
+                comments[wb['A'+i].v] = wb['B'+i].v;
+                // myComments[wb['A'+i].v] = wb['B'+i].v;
             }
         }
-    } else if (mySpreadSheet.length > 1) {
-        alert('Too many excel files');
-        myComments = false;
+        return comments;
+    };
+
+    excelMultiFlag = [];
+
+    if (excelPath === undefined) {
+        mySpreadSheet = list.filter(function(f) {
+            if (f.match(pattern)) {
+                sheetIndex = XLS.readFile(path.join(myPath, f))
+                .SheetNames.indexOf('Sum_table');
+                if (sheetIndex >= 0) return true;
+            }
+            return false;
+        });
     } else {
-        myComments = false
+        mySpreadSheet = [excelPath];
+    }
+    if (mySpreadSheet.length == 1) {
+        myComments = parseExcelComments(path.join(myPath, mySpreadSheet[0]));
+    } else if (mySpreadSheet.length > 1) {
+        excelMultiFlag = mySpreadSheet;
+    } 
+    if (excelPath === undefined && ascList.length !== Object.keys(myComments).length) {
+        if (Object.keys(myComments).length > 0) {
+            excelMultiFlag = mySpreadSheet;
+        }
+        myComments = false;
     }
 
     return myComments;
@@ -167,11 +211,15 @@ var updateWindow = function() {
         Comm = pt.excelComment;
         updatePlot(fname, Comm);
     }
-    $('#graph, #list, .asc-list, #main').css('height', pt.height +'px');
+    $('#graph, #main, #list').css('height', pt.height +'px');
+    $('.asc-list').css('height', (pt.height - $('.aux').height()) + 'px')
 };
 
 var showSelectDir = function() {
-    var retval = dialog.showOpenDialog({properties: ['openDirectory']});
+    var retval = dialog.showOpenDialog({
+        title: "Select data directory",
+        properties: ['openDirectory']
+    });
 
     if (retval == undefined) {
         return false;
@@ -298,6 +346,13 @@ var updateSaveProgress = function () {
     }, 500);
 };
 
+var resetSearchBox = function() {
+    $('.remove-icon').hide();
+    $('#search-word').val('');
+    $('.asc-file').removeClass('hide');
+    $('.hit-numbers').html('').hide();
+};
+
 /**** Event Listeners ****/
 
 $(window).resize(function() {
@@ -308,7 +363,10 @@ $('.select-dir-btn').on('click', function() {
     var tmp = showSelectDir();
     if (tmp) {
         myPath = tmp;
+        resetSearchBox();
         updateFileList(myPath);
+        $('#folderName').text(path.basename(myPath))
+        $(this).attr('title', myPath);
         $('svg').html('');
     }
     $(this).blur();
@@ -360,9 +418,36 @@ $('#pageAll').on('click', function() {
     $('#datamasking').prop('disabled', true);
 });
 
+// search
+
+$('#search-word').on('keyup', function() {
+    var kw = new RegExp(RegExp.escape($(this).val()),'ig');
+    var lis = $('.asc-file');
+    lis.addClass('hide');
+    searchBase.forEach(function(v, i) {
+        if (v.match(kw)) $(lis[i]).removeClass('hide');
+    });
+    if ($(this).val().length) {
+        $('.remove-icon').fadeIn(100);
+        $('.hit-numbers').fadeIn(100).html((lis.length - $('.asc-file.hide').length) + '<span style="color: #bbb;"> / ' + lis.length + '</span>');
+    } else {
+        $('.remove-icon, .hit-numbers').hide();
+   }
+});
+
+$('.remove-icon').on('click', function() {
+    resetSearchBox();
+});
+
+$('#select-excel-file').on('click', function() {
+    var retval = $('#commentExcel > option:selected').val();
+    updateFileList(myPath, retval);
+    $('#selectExcelModal').modal('hide');
+});
+
 $('.plottypes').sortable();
 $('.plottypes').disableSelection();
-
+$('.remove-icon, .hit-numbers').hide();
 // initialize window
 // pt.width = defWinSize.width - $('.list-area').width() - 18;
 // pt.height = defWinSize.height - $('.toolbar').height();

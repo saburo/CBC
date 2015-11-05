@@ -49,20 +49,21 @@ module.exports = {
             t = '',
             suffix = '',
             label = '',
-            xOffset = 0,
             padding = 10,
+            xOffset = 48.90625 + padding,
             cv = d3.select('.current-values'),
             color = this.config.color,
             data = this.data;
 
         cv.selectAll("*").remove();
-        xOffset += cv.append('text').text('Cycle# ' + cycle).node().getBBox().width + padding;
+
+        cv.append('text').text('Cycle# ' + cycle);
         this.plotType.forEach(function(v, i) {
             if (v === 'cps') {
                 suffix = ' [cps]';
                 d3.keys(data.cps).forEach(function(vv, ii) {
-                    txt = vv.replace(' ', '') + ': ' + data.cps[vv][cycle - 1] + suffix;
-                    t = cv.append('text').text(txt).attr({
+                    txt = self.formatLabels(vv) + ': ' + data.cps[vv][cycle - 1] + suffix;
+                    t = cv.append('text').html(txt).attr({
                         x: xOffset,
                         fill: color.cps[vv],
                     });
@@ -72,7 +73,7 @@ module.exports = {
                 label = self.config.labels[v];
                 suffix = (v === 'hydrite') ? ' [\u00D7E' + self.config.order['hydrite'] + ']' : ' [\u2030]';
                 txt = label + ': ' + self.f03(data.plotData[cycle - 1][v]) + suffix;
-                t = cv.append('text').text(txt).attr({
+                t = cv.append('text').html(txt).attr({
                     x: xOffset,
                     fill: color[v],
                 });
@@ -126,8 +127,18 @@ module.exports = {
     },
 
     addTitle: function(obj) {
+        var self = this;
+        var title = [];
+        self.titleContents.forEach(function(v, i) {
+            if (v === 'filename') {
+                title.push('<tspan font-weight="normal">[' + self.ascFileName + ']</tspan>');
+            } else {
+                title.push(self.excelComment.replace(/^\[A\]\s/, ''));
+            }
+        });
         obj.append('g').classed('title', true)
             .append('text')
+            .append('tspan')
             .attr({
                 'text-anchor': 'middle',
                 x: this.width / 2,
@@ -135,7 +146,7 @@ module.exports = {
                 'font-weight': 'bold',
             })
             .style({})
-            .text(this.excelComment);
+            .html(title.join(' '));
     },
 
     addCPSLegend: function(obj) {
@@ -157,8 +168,8 @@ module.exports = {
                 r: r,
                 cx: 0, cy: -(6 - r/2)
             });
-            var myText = ' [\u00D7E' + self.stat[v].order + ']';
-            li.append('text').text(v.replace(' ', '') + myText).attr({
+            var myOrder = ' [\u00D7E+' + self.stat[v].order + ']';
+            li.append('text').html(self.formatLabels(v) + myOrder).attr({
                 x: r + 4,
                 y: 0, 
                 fill: color[v],
@@ -173,10 +184,6 @@ module.exports = {
     },
 
     addAverageLine: function(obj, t) {
-        if (t === 'cps') {
-            this.addCPSLegend(obj, this.scale);
-            return;
-        }
         var self = this;
         var stat = self.calcAverage(t);
         var avLine = obj.select('.average-line'),
@@ -377,6 +384,9 @@ module.exports = {
             if (self.averages.indexOf(t) >= 0) {
                 this.addAverageLine(plots[t], t);
             }
+            if (t === 'cps') {
+                this.addCPSLegend(plots[t], self.scale);
+            }
 
             var lastFlag = (parseInt(i) === (parseInt(self.plotType.length) - 1)) ? true : false;
             // Create Axis bases
@@ -390,9 +400,9 @@ module.exports = {
                     x: -height / 2,
                     transform: 'rotate(-90)',
                 }).style({
-                    'font-size': '14px',
+                    'font-size': '16px',
                     "text-anchor": "middle",
-                }).text(self.config.labels[t]);
+                }).html(self.config.labels[t]);
 
             // Create line and point frame
             plots[t].append('g').classed('line', true);
@@ -631,6 +641,16 @@ module.exports = {
         return Object.keys(data.cps)[0].replace(/\d+/, '');
     },
 
+    formatLabels: function(txt) {
+        var pa1 = /(\d+)/g,
+            re1 = '<tspan baseline-shift="super" font-size="60%">$1</tspan>',
+            // suf = '</tspan>',
+            pa2 = /delta/g,
+            re2 = '\u03B4',
+            ret = txt.replace(' ', '').replace(pa1, re1).replace(pa2,re2);
+        return '<tspan>' + ret + '</tspan>';
+    },
+
     isotopeSysConfig: function(iso) {
         if (iso === 'O' || iso === 'O2') {
             var Scale = this.VSMOW,
@@ -638,14 +658,18 @@ module.exports = {
                 dRatio = ['18O', '16O'], // [numerator, denominator]
                 hRatio = ['16O 1H', '16O'];
                 color = {
-                    cps: {'16O': 'red', '18O': 'green', '16O 1H': '#00A7EA'},
+                    cps: {
+                        '16O':    'red',
+                        '18O':    'green',
+                        '16O 1H': '#00A7EA'
+                    },
                     hydrite: 'blue',
                     delta: 'magenta'
                 },
                 label = {
                     cps: 'cps',
-                    hydrite: '16O1H/16O',
-                    delta: 'd18O'
+                    hydrite: this.formatLabels('16O1H/16O'),
+                    delta: this.formatLabels('delta18O'),
                 },
                 suffix = {
                     hydrite: '',
@@ -657,14 +681,18 @@ module.exports = {
                 dRatio = ['13C', '12C']; // [numerator, denominator]
                 hRatio = ['13C 1H', '13C'];
                 color = {
-                    cps: {'12C': 'red', '13C': 'green', '13C 1H': '#00A7EA'},
+                    cps: {
+                        '12C':    'red', 
+                        '13C':    'green', 
+                        '13C 1H': '#00A7EA'
+                    },
                     hydrite: 'blue',
                     delta: 'magenta'
                 },
                 label = {
                     cps: 'cps',
-                    hydrite: '13C1H/13C',
-                    delta: 'd13C' 
+                    hydrite: this.formatLabels('13C1H/13C'),
+                    delta: this.formatLabels('delta13C'),
                 },
                 suffix = {
                     hydrite: '',

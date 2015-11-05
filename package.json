@@ -9,7 +9,7 @@
     "electron-prebuilt": "^0.34.1",
     "jquery": "^2.1.4",
     "jquery-ui": "^1.10.5",
-    "xlsjs": "^0.7.5"
+    "xlsx": "^0.8.0"
   },
   "scripts": {
     "release": "node release.js",

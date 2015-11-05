@@ -5,27 +5,80 @@
   <title>Cycle-by-Cycle Plot by WiscSIMS</title>
   <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="css/main.css">
+  <link rel="stylesheet" type="text/css" href="css/svg.css">
 </head>
 <body>
 
+
   <div id="toolbar" class="toolbar">
-    <button type="button" class="btn btn-default toolbar-btn preference-btn" id="preference"><span class="glyphicon glyphicon-cog"></span> Preferences…</button>
-    <button type="button" class="btn btn-default toolbar-btn export-btn" id="exportas"><span class="glyphicon glyphicon-save"></span> Export…</button>
-    <button type="button" class="btn btn-default toolbar-btn select-dir-btn pull-right"><span class="glyphicon glyphicon-folder-open"></span>  Select Folder…</button>
-  </div>
+    <a class="pull-left toolbar-btn" id="wiscsims" title="Go to WiscSIMS Web Site" style="width: 40px; height: 40px; background:url(./img/logo.png);display: block;" href="http://www.geology.wisc.edu/~wiscsims/" target="_blank"></a>
+    <div class="pull-right toolbar-btn preference-btn" style="" id="preference" title="Preferences">
+      <span style="font-size: 26px; color: white;" class="glyphicon glyphicon-cog"></span>
+    </div>
+    <div class="pull-right toolbar-btn export-btn" style="" id="exportas" title="Save plot(s)">
+      <span style="font-size: 26px; color: white;" class="glyphicon glyphicon-save"></span>
+    </div>
+    <div class="pull-right toolbar-btn export-btn" style="" id="dataexportas" title="Export data">
+      <span style="font-size: 26px; color: white;" class="glyphicon glyphicon-export"></span>
+    </div>
+
+<!--     <button type="button" class="btn btn-default toolbar-btn preference-btn" id="preference"><span class="glyphicon glyphicon-cog"></span></button>
+    <button type="button" class="btn btn-default toolbar-btn export-btn" id="exportas"><span class="glyphicon glyphicon-save"></span></button>
+ -->  </div>
   <div id="main" class="main">
     <div id="graph" class="graph-area"><svg></svg></div>
     <div id="list" class="list-area">
+      <div class="aux">
+        <div class="select-dir-btn">
+           <i class="glyphicon glyphicon-folder-open folder-icon"></i><p id="folderName" class="folder-name"> Select Folder</p>
+        </div>
+        <div class="search-box" style="background: #aaa; height: 30px;">
+           <i class="glyphicon glyphicon-search folder-icon"></i>
+           <input id="search-word" class="search-word" type="text" style="">
+           <i class="glyphicon glyphicon-remove-sign remove-icon"></i>
+           <p class="hit-numbers" style=''></p>
+        </div>
+      </div>
       <ul id="asc-list" class='asc-list'></ul>
     </div>
   </div>
+
+  <div id="selectExcelModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">Select an Excel file for the Comments</div>
+        <div class="modal-body"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="select-excel-file">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="mememe" role="dialog">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Modal title</h4>
+        </div>
+        <div class="modal-body">
+          <input type="text">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary">Save changes</button>
+          <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
 
   <div id='exportModal' class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title" id="PrintConfigLabel">Export Preferences</h4>
+          <h4 class="modal-title" id="PrintConfigLabel">Save Plot(s)</h4>
         </div>
         <div class="modal-body">
           <form class="form-horizontal">
@@ -82,26 +135,25 @@
             <div class="col-sm-1"></div>
             <div class="col-sm-10">
               <div class="progress progress-striped">
-                <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 0%;" id="progress-bar"> 0% </div>
+                <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 0%; min-width: 2em;" id="progress-bar"> 0% </div>
               </div>
             </div>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" id="print-btn">Export...</button>
+          <button type="button" class="btn btn-primary" id="print-btn">Save...</button>
         </div>
       </div>
     </div>
   </div>
-
 
   <div id='configModal' class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title" id="PrintConfigLabel">Config</h4>
+          <h4 class="modal-title" id="PrintConfigLabel">Plot Configurations</h4>
         </div>
         <div class="modal-body">
           <form class="form-horizontal">
@@ -166,6 +218,12 @@
       </div>
     </div>
   </div>
+
+
+
+
+
+
   <script>require('./js/app')</script>
 </body>
 </html>

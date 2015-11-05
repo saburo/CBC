@@ -13,16 +13,129 @@ body {
 	scroll: none;
 	font-family: Helvetica, sans-serif;
 }
-.axis text {
-	font: 12px sans-serif;
+.toolbar {
+	/*position: fixed;*/
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 50px;
+	background: #A7A7A7;
+	background: #afafaf;
+	background: #696969;
+	padding-right: 20px;
 }
-.axis path,
-.axis line {
-	fill: none;
-	stroke: #000;
-	stroke-width: 1.2;
-	shape-rendering: crispEdges;
+
+	.toolbar-btn {
+/*		margin: 8px 0 0 10px;
+		margin: 0;
+*/		margin: 5px 5px 0 5px;
+		border-radius: 3px;
+		padding: 5px 10px;
+		text-align: center;
+	}
+	.toolbar-btn:hover {
+		background: #999;
+	}
+
+	.preference-btn:active,
+	.export-btn:active {
+		background: #bbb;
+	}
+/*	.select-dir-btn {
+		width: 230px;
+	}
+	.select-dir-btn span {
+		margin-right: 10px;
+	}
+*/
+.main {
+	position: relative;
+	width: 100%;
+	margin: 0; 
+	padding: 0; 
+	background: #ccc;
+	overflow: hidden;
 }
+
+.graph-area,
+.list-area {
+	/*float: left;*/
+}
+
+.list-area {
+	position: absolute;
+	top: 0;
+	right: 0;
+	background: #337AB7;
+}
+.select-dir-btn {
+	position: relative;
+	height: 30px;
+	width: 250px;
+	color: white;
+	background: #777;
+	line-height: 30px;
+	padding: 0;
+	/*padding-top: 5px;*/
+}
+.folder-icon {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 25px;
+	margin: 8px 0 0 8px;
+}
+.folder-name {
+	width: 220px;
+	margin-left: 33px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+.search-box {
+	position: relative;
+	height: 40px;
+	width: 250px;
+	color: white;
+	background: #777;
+	line-height: 30px;
+	padding: 0;
+}
+.search-word {
+	width: 200px; 
+	margin: 5px 0 0 33px;
+	padding: 0 0 0 3px;
+	font-size: 12px;
+	line-height: 12px;
+	background: #aaa;
+	color: white;
+	border: none; 
+	border-bottom: 1px solid #999;
+	outline: none;
+}
+
+.remove-icon {
+	position: absolute;
+	right: 3px;
+	top: 8px;
+	color: #bbb;
+}
+
+.hit-numbers {
+	position: absolute;
+    right: 0;
+    top: 27px;
+    color: #eee;
+    font-size: 10px;
+    background: #aaa;
+    border-bottom-left-radius: 3px;
+    /*border-bottom-right-radius: 3px;*/
+    text-align: right;
+    padding: 5px;
+    line-height: 10px;
+    display: none;
+}
+
 .asc-list {
 	width: 250px;
 	padding: 0;
@@ -42,6 +155,7 @@ body {
 	margin-left: 0;
 	margin-right: 0;
 	padding-left: 10px;
+	padding-right: 5px;
 	background: #f2f2f2;
 	color: #337AB7;
 	cursor: pointer;
@@ -62,58 +176,10 @@ body {
 	color: #819eb7;
 	color: #8bbee9;
 }
-.hide {
-	display: none;
-}
-.masked {
-	/*fill: rgba(200,200,200,0.8);*/
-	fill-opacity: 0.1;
-}
-.toolbar {
-	/*position: fixed;*/
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 50px;
-	background: #A7A7A7;
-	padding-right: 20px;
-}
 
-.toolbar-btn {
-	margin: 8px 0 0 10px;
-}
-
-.select-dir-btn {
-	width: 230px;
-}
-.select-dir-btn span {
-	margin-right: 10px;
-}
-
-.main {
-	position: relative;
-	width: 100%;
-	margin: 0; 
-	padding: 0; 
-	background: #ccc;
-	overflow: hidden;
-}
-.graph-area,
-.list-area {
-	/*float: left;*/
-}
-.list-area {
-	position: absolute;
-	top: 0;
-	right: 0;
-	background: #337AB7;
-}
-.current-values {
-	-webkit-user-select: none; 
-}
 .graph-area {
 	width: 100%;
-	min-width: 730px;
+	/*min-width: 730px;*/
 	margin: 0;
 	padding: 0;
 	background: #fefefa;

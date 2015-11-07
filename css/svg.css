@@ -1,0 +1,22 @@
+svg {
+	font-family: Helvetica, sans-serif;
+}
+.axis text {
+	font: 12px sans-serif;
+}
+.axis path,
+.axis line {
+	fill: none;
+	stroke: #000;
+	stroke-width: 1.2;
+	shape-rendering: crispEdges;
+}
+.hide {
+	display: none;
+}
+.masked {
+	fill-opacity: 0.1;
+}
+.current-values {
+	-webkit-user-select: none; 
+}

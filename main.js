@@ -11,6 +11,10 @@ var defaultWindowSize = {
     height: 680
 }
 
+
+
+
+
 global.defaultWindowSize = defaultWindowSize;
 global.saveProgress = 0;
 
@@ -39,7 +43,10 @@ app.on('ready', function() {
         width: defaultWindowSize.width,
         height: defaultWindowSize.height,
         'min-width': defaultWindowSize.width, 
-        'min-height': defaultWindowSize.height
+        'min-height': defaultWindowSize.height,
+        'web-preferences': {
+            'overlay-scrollbars': true
+        }
     });
 
     // and load the index.html of the app.
@@ -56,6 +63,12 @@ app.on('ready', function() {
         mainWindow = null;
     });
 
+    mainWindow.on('resize', function() {
+        mainWindow.webContents.send('window-resized', '');
+    });
+
+   mainWindow.setProgressBar(0.5);
+
 });
 
 var printPDF_args = {};
@@ -66,7 +79,6 @@ ipc.on('getPrintPDFArgs', function(e, arg) {
 
 var printWin;
 var savePDFEvent;
-
 
 ipc.on('saveAsPDF', function(e, arg) {
     // create invisible window for printing
@@ -104,3 +116,6 @@ ipc.on('rendering-done', function(e, arg) {
         });
     });
 });
+
+
+

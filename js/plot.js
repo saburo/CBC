@@ -311,16 +311,18 @@ module.exports = {
         this.averages = options.averages || this.averages;
 
         var self = this;
-        var margin = options.margin || {
-                top: 30,  
-                // top: 70,  
-                right: 20,
-                bottom: 60, 
-                left: 60
-            },
+        var margin = options.margin || {top: 35, right: 20, bottom: 60, left: 60},
             width = this.width - margin.left - margin.right,
             height = (this.height - margin.top - margin.bottom) / self.plotType.length; // divide by number of plots
         this.margin = margin;
+
+        // Add background (white)
+        svg.append('g').append('rect').classed('background', true).attr({
+            width: this.width,
+            height: this.height,
+            fill: '#fff',
+            stroke: 'none'
+        });
 
         var container = svg.append('g').classed('chart-frame', true)
             svg.attr({
@@ -663,8 +665,10 @@ module.exports = {
                         '18O':    'green',
                         '16O 1H': '#00A7EA'
                     },
-                    hydrite: 'blue',
+                    hydrite: '#24557F',
                     delta: 'magenta'
+                    // delta: '#f172ac'
+                    // delta: '#FDAA4C'
                 },
                 label = {
                     cps: 'cps',
@@ -686,7 +690,8 @@ module.exports = {
                         '13C':    'green', 
                         '13C 1H': '#00A7EA'
                     },
-                    hydrite: 'blue',
+                    hydrite: '#24557F',
+                    // delta: '#FC4482'
                     delta: 'magenta'
                 },
                 label = {

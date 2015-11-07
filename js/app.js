@@ -4,16 +4,18 @@ var fs = require('fs'),
     path = require('path'),
     ipc  = require('ipc'),
     remote = require('remote'),
-    dialog = remote.require('dialog');
+    dialog = remote.require('dialog'),
+    app = remote.require('app');
+global.browserWindow = remote.require('browser-window');
 
 var XLS = require('xlsx');
-// var XLS = require('xlsjs');
 global.$ = require('jquery');
 global.jQuery = global.$;
 
-require('jquery-ui/sortable');
+require('jquery-ui');
 
-var bootstrap = require('bootstrap');
+var bootstrap = require('bootstrap'),
+    base64 = require('urlsafe-base64');
 
 var ps = require('./asc_parser'),
 pt = require('./plot');
@@ -28,14 +30,18 @@ var excelMultiFlag = [];
 
 ipc.on('async-reply-print-done', function(status) {
     window.clearInterval(timerId);
-    var val = 100;
-    $('.progress-bar').attr({'aria-valuenow': val}).css({width: val + '%'}).text(val + '%');
-    window.setTimeout(function() {
-        $('.myspacer').removeClass('hide');
-        $('#progressbar').addClass('hide');
-        $('.progress').removeClass('active');
-        $('#exportModal').modal('hide');
-    }, 1000);
+    completeProgressBar();
+});
+
+ipc.on('window-resized', function() {
+    updateWindow();
+});
+
+ipc.on('move-next', function() {
+    moveNext();
+});
+ipc.on('move-prev', function() {
+    movePrev();
 });
 
 
@@ -48,30 +54,31 @@ var updateFileList = function(myDir, myExcel) {
     $('#asc-list').html('<li class="asc-file">Loading...</li>');
     fs.readdir(myDir, function(err, list) {
         var ExcelCommentFlag = 1,
-        myListItems = [],
-        ascList = getASCList(list),
-        excelComments = ExcelCommentFlag ? getExcelCommentList(list, myExcel): false,
-        Comm = '',
-        content = [],
-        item = '',
-        i = 0;
-        searchBase = [];
+            myListItems = [],
+            ascList = getASCList(list),
+            excelComments = ExcelCommentFlag ? getExcelCommentList(list, myExcel): false,
+            Comm = '',
+            CommOrigin = '',
+            content = [],
+            item = '',
+            i = 0;
+            searchBase = [];
+
         for (i in ascList) {
+            content = [];
             if (excelComments.hasOwnProperty(ascList[i])) {
                 Comm = excelComments[ascList[i]];
+                CommOrigin = ''
             } else {
-                Comm = '[A] ' + getComment(path.join(myDir, ascList[i]));
+                Comm = getComment(path.join(myDir, ascList[i]));
+                CommOrigin = $('<span/>').addClass('glyphicon glyphicon-text-background')
+                                         .attr('aria-hidden', true);
             }
-            // Comm = excelComments ? excelComments[ascList[i]] : getComment(path.join(myDir, ascList[i]));
-            content = [];
             content.push($('<p/>').addClass('asc-file-comment').text(Comm));
             content.push($('<p/>').addClass('asc-file-name').text(ascList[i]));
-
+            content.push($('<p/>').addClass('asc-file-comment-origin').append(CommOrigin));
             item = $('<li/>').addClass('asc-file')
-            .attr({
-                'data-asc': ascList[i],
-                'data-comment': Comm
-            });
+                             .attr({'data-asc': ascList[i], 'data-comment': Comm });
             searchBase.push(ascList[i] + ' ' + Comm);
             item.append(content);
             myListItems.push(item);
@@ -88,7 +95,7 @@ var updateFileList = function(myDir, myExcel) {
             excelMultiFlag.forEach(function(v) {
                 options.push($('<option/>').attr('value', v).text(v))
             });
-            var myModal = $('#selectExcelModal .modal-body');
+            var myModal = $('#selectExcelModal .main-modal-body');
             myModal.html('').append($('<select/>').attr('id', 'commentExcel').addClass('form-control').append(options));
             $('#selectExcelModal').modal({
                 show: true
@@ -215,9 +222,11 @@ var updateWindow = function() {
     $('.asc-list').css('height', (pt.height - $('.aux').height()) + 'px')
 };
 
-var showSelectDir = function() {
+var getDataDir = function(defaultDir) {
+    defaultDir = defaultDir || app.getPath('userDesktop');
     var retval = dialog.showOpenDialog({
         title: "Select data directory",
+        defaultPath: defaultDir,
         properties: ['openDirectory']
     });
 
@@ -228,13 +237,29 @@ var showSelectDir = function() {
     }
 };
 
+var initProgressBar = function() {
+    $('.progress-bar').attr({'aria-valuenow': 0}).css({width: '0%'}).text('0%');
+    $('.myspacer').addClass('hide');
+    $('#progressbar').removeClass('hide');
+    $('.progress').addClass('active');
+};
+
+var completeProgressBar = function(waitTime) {
+    var val = 100;
+    waitTime = waitTime || 1000;
+    $('.progress-bar').attr({'aria-valuenow': val}).css({width: val + '%'}).text(val + '%');
+    window.setTimeout(function() {
+        $('.myspacer').removeClass('hide');
+        $('#progressbar').addClass('hide');
+        $('.progress').removeClass('active');
+        $('#exportModal').modal('hide');
+    }, waitTime);
+};
+
 var saveAsPDF = function () {
     dialog.showSaveDialog(function(destPath) {
         if (destPath == undefined) return false;
-        $('.progress-bar').attr({'aria-valuenow': 0}).css({width: '0%'}).text('0%');
-        $('.myspacer').addClass('hide');
-        $('#progressbar').removeClass('hide');
-        $('.progress').addClass('active');
+        initProgressBar()
         var files = [];
         destPath = (destPath.match(/\.pdf$/)) ? destPath : destPath + '.pdf';
         var mask = [];
@@ -272,7 +297,6 @@ var saveAsPDF = function () {
                 printFlag: true,
                 titleContents: getConfig('titles'),
                 averages: getConfig('averages'),
-                // maskedData: mask || pt.maskedData,
                 maskedData: mask, 
                 margin: {top: 60, right: 20, bottom: 35, left: 70},
             }
@@ -282,8 +306,9 @@ var saveAsPDF = function () {
     });
 };
 
-var saveAsSVG = function() {
-    if ($('svg').length) {
+var saveAsSVG = function(imgFlag) {
+    if ($('.current').length) {
+        initProgressBar();
         var d3 = require('d3');
         var html = d3.select(d3.select("svg").node().parentNode.cloneNode(true));
 
@@ -320,17 +345,59 @@ var saveAsSVG = function() {
         html.select('.masked-area').remove();
         html.select('.mouse-receiver').remove();
 
+        var svgText = headers + html.node().innerHTML;
+
         dialog.showSaveDialog(function(destPath) {
             if (destPath == undefined) return false;
-
-            destPath += destPath.match(/\.svg$/) ? '' : '.svg';
-            fs.writeFile(destPath, headers + html.node().innerHTML, function(err) {
-                html.remove();
-                if (err) { dialog.showErrorBox("ERROR", "SVG file has not been saved"); }
-            });
+            if(imgFlag) {
+                if (imgFlag === 'png') {
+                    destPath += destPath.match(/\.png$/) ? '' : '.png';
+                } else {
+                    destPath += destPath.match(/\.jpe?g$/) ? '' : '.jpg';
+                }
+                svg_to_img(html[0][0], pt, destPath, imgFlag);
+            } else {
+                destPath += destPath.match(/\.svg$/) ? '' : '.svg';
+                fs.writeFile(destPath, svgText, function(err) {
+                    if (err) { dialog.showErrorBox("ERROR", "SVG file has not been saved"); }
+                    completeProgressBar();
+                });
+            }
         });
+        html.remove();
+    } else {
+        alert('Select data for exporting a plot');
     }
 };
+
+function svg_to_img(html, pt, destPath, format) {
+    var svg = html.querySelector("svg");
+    if (typeof window.XMLSerializer != "undefined") {
+        var svgData = (new XMLSerializer()).serializeToString(svg);
+    } else if (typeof svg.xml != "undefined") {
+        var svgData = svg.xml;
+    }
+    
+    var canvas = document.createElement("canvas");
+    var svgSize = svg.getBoundingClientRect();
+    canvas.width = pt.width;
+    canvas.height = pt.height;
+    var ctx = canvas.getContext("2d");
+    var img = document.createElement("img");
+    img.setAttribute("src", "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData))) );
+
+    img.onload = function() {
+        ctx.drawImage(img, 0, 0);
+        var imgsrc = canvas.toDataURL("image/" + format, 1.0);
+        var b64img = imgsrc.split(',')[1];
+        img.remove();
+        fs.writeFile(destPath, base64.decode(b64img), function(err) {
+            if (err) { dialog.showErrorBox("ERROR", "File has not been saved"); }
+            completeProgressBar(); 
+        });
+    };
+};
+
 
 var timerId = '';
 var div = 1;
@@ -347,20 +414,48 @@ var updateSaveProgress = function () {
 };
 
 var resetSearchBox = function() {
-    $('.remove-icon').hide();
+    $('.remove-icon').fadeOut(200);
     $('#search-word').val('');
     $('.asc-file').removeClass('hide');
-    $('.hit-numbers').html('').hide();
+    $('.hit-numbers').slideUp(200).html('').hide()
+    // $('.active').removeClass('active');
+};
+
+var adjustItemPosition = function(item) {
+    var al = $('#asc-list')
+    al.scrollTop(al.scrollTop() + item.position().top - al.height()/2);
+};
+
+var moveNext = function() {
+    var list = $('.asc-file'),
+        l = list.length, i = 0;
+    for (i=0;i<l;i++) {
+        var li = $(list[i]);
+        if (li.hasClass('current')) {
+            if (i === l-1) return;
+            adjustItemPosition($(list[i+1]).click());
+            return;
+        }
+    }
+};
+
+var movePrev = function() {
+    var list = $('.asc-file'),
+    l = list.length, i = 0;
+
+    for (i=0;i<l;i++) {
+        var li = $(list[i]);
+        if (li.hasClass('current')) {
+            if (i === 0) return;
+            adjustItemPosition($(list[i-1]).click());
+            return;
+        }
+    }
 };
 
 /**** Event Listeners ****/
-
-$(window).resize(function() {
-    updateWindow();
-});
-
 $('.select-dir-btn').on('click', function() {
-    var tmp = showSelectDir();
+    var tmp = getDataDir();
     if (tmp) {
         myPath = tmp;
         resetSearchBox();
@@ -382,10 +477,15 @@ $('#preference').on('click', function() {
 
 
 $('#print-btn').on('click', function() {
-    if ($('.format > input:checked').val() === 'pdf') {
+    var fmt = $('.format > input:checked').val()
+    if (fmt === 'pdf') {
         saveAsPDF();
-    } else {
+    } else if (fmt === 'svg'){
         saveAsSVG();
+    } else if (fmt === 'png') {
+        saveAsSVG('png');
+    } else if (fmt === 'jpeg') {
+        saveAsSVG('jpeg');
     }
     $(this).blur();
 });
@@ -396,7 +496,7 @@ $('#save-config-btn').on('click', function() {
     $(this).blur();
 });
 
-$('#fileformatSVG').on('click', function() {
+$('#fileformatSVG, #fileformatPNG, #fileformatJPG').on('click', function() {
     $('#pageCurrent').prop('checked', true);
     $('#pageAll').prop('disabled', true);
     $('.paper-orientation > input').prop('disabled',true);
@@ -419,19 +519,25 @@ $('#pageAll').on('click', function() {
 });
 
 // search
-
+$('.search-icon').on('click', function() {
+    $('#search-word').focus();
+});
 $('#search-word').on('keyup', function() {
-    var kw = new RegExp(RegExp.escape($(this).val()),'ig');
+    // var kw = new RegExp(RegExp.escape($(this).val()),'ig');
+    var kw = new RegExp($(this).val(),'ig');
     var lis = $('.asc-file');
     lis.addClass('hide');
     searchBase.forEach(function(v, i) {
         if (v.match(kw)) $(lis[i]).removeClass('hide');
     });
     if ($(this).val().length) {
+        var hits = (lis.length - $('.asc-file.hide').length)
         $('.remove-icon').fadeIn(100);
-        $('.hit-numbers').fadeIn(100).html((lis.length - $('.asc-file.hide').length) + '<span style="color: #bbb;"> / ' + lis.length + '</span>');
+        $('.hit-numbers').slideDown(100)
+                         .html( hits + '<span style="color: #ccc;"> / ' + lis.length + '</span>');
     } else {
-        $('.remove-icon, .hit-numbers').hide();
+        $('.remove-icon').fadeOut(100);
+        $('.hit-numbers').slideUp(100);
    }
 });
 
@@ -445,19 +551,267 @@ $('#select-excel-file').on('click', function() {
     $('#selectExcelModal').modal('hide');
 });
 
-$('.plottypes').sortable();
-$('.plottypes').disableSelection();
-$('.remove-icon, .hit-numbers').hide();
-// initialize window
-// pt.width = defWinSize.width - $('.list-area').width() - 18;
-// pt.height = defWinSize.height - $('.toolbar').height();
+$('#wiscsims').on('click', function() {
+    $('.flags').toggleClass("on", 800);
+});
 
+$('#search-word').on('focus', function() {
+    $('.search-box, .hit-numbers').addClass('active');
+});
+$('#search-word').on('blur', function() {
+    $('.search-box, .hit-numbers').removeClass('active');
+});
 
 /**** Main routine (init) ****/
 
-myPath = '/Users/saburo/Desktop/R/TEST_SIMS_DATA/20140624_d18O_garnet_stds_Kouki';
-// myPath = showSelectDir();
+$('.plottypes').sortable();
+$('.plottypes').disableSelection();
+$('.remove-icon, .hit-numbers').hide();
+// myPath = '/Users/saburo/Desktop/R/TEST_SIMS_DATA/20140624_d18O_garnet_stds_Kouki';
+myPath = '/Users/saburo/Desktop/R/TEST_SIMS_DATA/Miami';
+// myPath = getDataDir();
 updateFileList(myPath);
 updateWindow();
 
 
+/**** Menu ****/
+
+var Menu = remote.require('menu');
+var MenuItem = remote.require('menu-item');
+
+var template = [
+    {
+        label: 'File',
+        submenu: [
+            {
+                label: 'Open Data Directory…',
+                accelerator: 'CmdOrCtrl+O',
+                click: function(item, focusedWindow) {
+                    $('.select-dir-btn').click();
+                }
+            },
+            {
+                label: 'Export As…',
+                // accelerator: 'CmdOrCtrl+S',
+                click: function(item, focusedWindow) {
+                    $('#exportas').click();
+                }
+            }
+        ]
+    },
+  {
+    label: 'Edit',
+    submenu: [
+      {
+        label: 'Undo',
+        accelerator: 'CmdOrCtrl+Z',
+        role: 'undo'
+      },
+      {
+        label: 'Redo',
+        accelerator: 'Shift+CmdOrCtrl+Z',
+        role: 'redo'
+      },
+      {
+        type: 'separator'
+      },
+      {
+        label: 'Cut',
+        accelerator: 'CmdOrCtrl+X',
+        role: 'cut'
+      },
+      {
+        label: 'Copy',
+        accelerator: 'CmdOrCtrl+C',
+        role: 'copy'
+      },
+      {
+        label: 'Paste',
+        accelerator: 'CmdOrCtrl+V',
+        role: 'paste'
+      },
+      {
+        label: 'Select All',
+        accelerator: 'CmdOrCtrl+A',
+        role: 'selectall'
+      },
+    ]
+  },
+  {
+    label: 'View',
+    submenu: [
+      {
+        label: 'Reload',
+        accelerator: 'CmdOrCtrl+R',
+        click: function(item, focusedWindow) {
+          if (focusedWindow)
+            focusedWindow.reload();
+        }
+      },
+      {
+        label: 'Toggle Full Screen',
+        accelerator: (function() {
+          if (process.platform == 'darwin')
+            return 'Ctrl+Command+F';
+          else
+            return 'F11';
+        })(),
+        click: function(item, focusedWindow) {
+          if (focusedWindow)
+            focusedWindow.setFullScreen(!focusedWindow.isFullScreen());
+        }
+      },
+      {
+        label: 'Toggle Developer Tools',
+        accelerator: (function() {
+          if (process.platform == 'darwin')
+            return 'Alt+Command+I';
+          else
+            return 'Ctrl+Shift+I';
+        })(),
+        click: function(item, focusedWindow) {
+          if (focusedWindow)
+            focusedWindow.toggleDevTools();
+        }
+      },
+      {
+        label: 'Move Next Data',
+        accelerator: (function() {
+          if (process.platform == 'darwin')
+            return 'Shift+down';
+          else
+            return 'Ctrl+Shift+I';
+        })(),
+        click: function(item, focusedWindow) {
+          if (focusedWindow)
+            focusedWindow.webContents.send('move-next');
+        }
+      },
+      {
+        label: 'Move Previous Data',
+        accelerator: (function() {
+          if (process.platform == 'darwin')
+            return 'Shift+up';
+          else
+            return 'Ctrl+Shift+I';
+        })(),
+        click: function(item, focusedWindow) {
+          if (focusedWindow)
+            focusedWindow.webContents.send('move-prev');
+        }
+      },
+    ]
+  },
+  {
+    label: 'Window',
+    role: 'window',
+    submenu: [
+      {
+        label: 'Minimize',
+        accelerator: 'CmdOrCtrl+M',
+        role: 'minimize'
+      },
+      {
+        label: 'Close',
+        accelerator: 'CmdOrCtrl+W',
+        role: 'close'
+      },
+    ]
+  },
+  {
+    label: 'Help',
+    role: 'help',
+    submenu: [
+      {
+        label: 'Learn More',
+        click: function() { require('shell').openExternal('http://electron.atom.io') }
+      },
+    ]
+  },
+];
+
+if (process.platform == 'darwin') {
+  var name = remote.require('app').getName();
+  template.unshift({
+    label: name,
+    submenu: [
+      {
+        label: 'About ' + name,
+        role: 'about'
+      },
+      {
+        type: 'separator'
+      },
+      {
+        label: 'Preference',
+        accelerator: 'Command+,',
+        click: function() {
+            $('#preference').click();
+        }
+      },
+      {
+        label: 'Preference2',
+        accelerator: 'Command+.',
+        click: function() {
+            var bw = new browserWindow({
+                height: 500,
+                width: 500,
+                'min-height': 500,
+                'min-width': 500,
+                'always-on-top': true
+            });
+            bw.loadUrl('file://' + __dirname + '/../src/renderer/html/preference.html');
+            bw.on('closed', function() {
+                bw = null;
+            });
+
+        }
+      },
+      {
+        type: 'separator' 
+      },
+      {
+        label: 'Services',
+        role: 'services',
+        submenu: []
+      },
+      {
+        type: 'separator'
+      },
+      {
+        label: 'Hide ' + name,
+        accelerator: 'Command+H',
+        role: 'hide'
+      },
+      {
+        label: 'Hide Others',
+        accelerator: 'Command+Shift+H',
+        role: 'hideothers'
+      },
+      {
+        label: 'Show All',
+        role: 'unhide'
+      },
+      {
+        type: 'separator'
+      },
+      {
+        label: 'Quit',
+        accelerator: 'Command+Q',
+        click: function() { app.quit(); }
+      },
+    ]
+  });
+  // Window menu.
+  template[3].submenu.push(
+    {
+      type: 'separator'
+    },
+    {
+      label: 'Bring All to Front',
+      role: 'front'
+    }
+  );
+}
+
+Menu.setApplicationMenu(Menu.buildFromTemplate(template));

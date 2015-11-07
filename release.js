@@ -17,7 +17,7 @@ packager({
     'app-version': config.version,
     'helper-bundle-id': 'edu.wisc.geology.wiscsims', //<- 自分のドメインなどを使用してください
     overwrite: true,
-    asar: false,
+    asar: true,
     prune: false,
     ignore: "node_modules/(electron-packager|electron-prebuilt|\.bin)|release\.js|\.DS_Store",
     'version-string': {

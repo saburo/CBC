@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>Cycle by Cycle Plot for Isotope Monkeys</title>
-  <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
-  <link rel="stylesheet" type="text/css" href="css/main.css">
-  <link rel="stylesheet" type="text/css" href="css/svg.css">
+  <link rel="stylesheet" type="text/css" href="../../static/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="../../static/css/main.css">
+  <link rel="stylesheet" type="text/css" href="../../static/css/svg.css">
 </head>
 
 <body>
@@ -13,7 +13,7 @@
   <!-- Tool bar -->
   <div id="toolbar" class="toolbar">
     <div id="flags" class="flags"></div>
-    <div class="pull-left toolbar-btn" id="wiscsims" title="Show Flags!" style="width: 42px; height: 40px; background:url(./img/logo2.png);"></div>
+    <div class="pull-left wiscsims" id="wiscsims" title="Show Flags!" style=""></div>
 
     <div class="pull-right toolbar-btn preference-btn" style="" id="preference" title="Preferences">
       <span style="font-size: 26px; color: white;" class="glyphicon glyphicon-cog"></span>
@@ -214,6 +214,6 @@
   </div>
   <!-- /config -->
 
-  <script>require('./js/app')</script>
+  <script>require('../renderer/plotter/main')</script>
 </body>
 </html>

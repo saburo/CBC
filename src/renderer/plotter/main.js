@@ -17,8 +17,8 @@ require('jquery-ui');
 var bootstrap = require('bootstrap'),
     base64 = require('urlsafe-base64');
 
-var ps = require('./asc_parser'),
-pt = require('./plot');
+var ps = require('./common/asc_parser'),
+    pt = require('./common/plot');
 
 var defWinSize = remote.getGlobal('defaultWindowSize');
 var myPath = '';
@@ -760,10 +760,11 @@ if (process.platform == 'darwin') {
                 'min-width': 500,
                 'always-on-top': true
             });
-            bw.loadUrl('file://' + __dirname + '/../src/renderer/html/preference.html');
+            bw.loadUrl('file://' + __dirname + '/../preference/preference.html');
             bw.on('closed', function() {
                 bw = null;
             });
+            bw.openDevTools();
 
         }
       },

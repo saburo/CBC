@@ -92,7 +92,7 @@ ipc.on('saveAsPDF', function(e, arg) {
     printWin.on('closed', function() {
         printWin = null;
     });
-    printWin.loadUrl('file://' + __dirname + '/print.html');
+    printWin.loadUrl('file://' + __dirname + '/../renderer/printer/print.html');
     // printWin.openDevTools();
 });
 

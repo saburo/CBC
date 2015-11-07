@@ -3,8 +3,8 @@ var fs = require('fs'),
     remote = require('remote'),
     ipc = require('ipc'),
     d3 = require('d3'),
-    ps = require('./asc_parser.js'),
-    pt = require('./plot.js');
+    ps = require('../plotter/common/asc_parser'),
+    pt = require('../plotter/common/plot');
 
 
 var myPath = '';

@@ -46,6 +46,12 @@ body {
 		background: #2a6495;
 		background: #1777ca;
 	}
+	.wiscsims {
+		width: 42px;
+		height: 40px;
+		margin: 5px 5px 0 5px;
+		background:url(../img/logo2.png);
+	}
 
 	.flags {
 		position: absolute;

@@ -542,7 +542,7 @@ module.exports = {
             });
         }
 
-        if (self.printFlag) console.log(self.ascFileName);
+        // if (self.printFlag) console.log(self.ascFileName);
     },
 
     maskData: function(obj, range, plotObj) {

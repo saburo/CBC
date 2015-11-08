@@ -34,7 +34,7 @@ module.exports = {
 
     titleContents: ['comment'],
 
-    averages: ['hydrite', 'delta'],
+    averages: ['hydride', 'delta'],
 
     iso: 'C',
 
@@ -71,7 +71,7 @@ module.exports = {
                 });
             } else {
                 label = self.config.labels[v];
-                suffix = (v === 'hydrite') ? ' [\u00D7E' + self.config.order['hydrite'] + ']' : ' [\u2030]';
+                suffix = (v === 'hydride') ? ' [\u00D7E' + self.config.order['hydride'] + ']' : ' [\u2030]';
                 txt = label + ': ' + self.f03(data.plotData[cycle - 1][v]) + suffix;
                 t = cv.append('text').html(txt).attr({
                     x: xOffset,
@@ -215,7 +215,7 @@ module.exports = {
             // .attr({y1: self.scale[t].y(stat.max), y2: self.scale[t].y(stat.max)})
             // .transition().duration(200)
             .attr({y1: self.scale[t].y(stat.mean), y2: self.scale[t].y(stat.mean)});
-        var suffix = (t==='hydrite') ? ' [\u00D7E' + this.config.order.hydrite + ']' : ' [\u2030]';
+        var suffix = (t==='hydride') ? ' [\u00D7E' + this.config.order.hydride + ']' : ' [\u2030]';
         avText.text('Average & 2SE: ' + self.f02(stat.mean) + ' ± ' + self.f02(stat.se2) + suffix);
     },
 
@@ -612,15 +612,15 @@ module.exports = {
             l = data.cps[myKeys[0]].length,
             i = 0,
             cycleData = {},
-            hydriteRatio = [];
+            hydrideRatio = [];
 
-        var nume = data.cps[this.config.hydriteRatio[0]],
-            deno = data.cps[this.config.hydriteRatio[1]];
+        var nume = data.cps[this.config.hydrideRatio[0]],
+            deno = data.cps[this.config.hydrideRatio[1]];
         for (i=0; i<l; i++) {
-            hydriteRatio.push(nume[i] / deno[i]);
+            hydrideRatio.push(nume[i] / deno[i]);
         }
-        var hydriteOrder = Math.ceil(Math.log(d3.mean(hydriteRatio)) / Math.LN10) - 1;
-        this.config['order'] = {hydrite: hydriteOrder};
+        var hydrideOrder = Math.ceil(Math.log(d3.mean(hydrideRatio)) / Math.LN10) - 1;
+        this.config['order'] = {hydride: hydrideOrder};
 
         nume = data.cps[this.config.deltaRatio[0]],
         deno = data.cps[this.config.deltaRatio[1]];
@@ -632,7 +632,7 @@ module.exports = {
                 cycleData['cps'][key] = data.cps[key][i] / Math.pow(10, data.stat[key].order);
             }
             cycleData['delta'] = (nume[i] / deno[i] / this.config.deltaScale - 1) * 1000;
-            cycleData['hydrite'] = hydriteRatio[i] / Math.pow(10, hydriteOrder);
+            cycleData['hydride'] = hydrideRatio[i] / Math.pow(10, hydrideOrder);
             out.push(cycleData);
         }
         return out;
@@ -665,18 +665,18 @@ module.exports = {
                         '18O':    'green',
                         '16O 1H': '#00A7EA'
                     },
-                    hydrite: '#24557F',
+                    hydride: '#24557F',
                     delta: 'magenta'
                     // delta: '#f172ac'
                     // delta: '#FDAA4C'
                 },
                 label = {
                     cps: 'cps',
-                    hydrite: this.formatLabels('16O1H/16O'),
+                    hydride: this.formatLabels('16O1H/16O'),
                     delta: this.formatLabels('delta18O'),
                 },
                 suffix = {
-                    hydrite: '',
+                    hydride: '',
                     delta: '[\u2030]'
                 };
         } else if (iso === 'C') {
@@ -690,17 +690,17 @@ module.exports = {
                         '13C':    'green', 
                         '13C 1H': '#00A7EA'
                     },
-                    hydrite: '#24557F',
+                    hydride: '#24557F',
                     // delta: '#FC4482'
                     delta: 'magenta'
                 },
                 label = {
                     cps: 'cps',
-                    hydrite: this.formatLabels('13C1H/13C'),
+                    hydride: this.formatLabels('13C1H/13C'),
                     delta: this.formatLabels('delta13C'),
                 },
                 suffix = {
-                    hydrite: '',
+                    hydride: '',
                     delta: '[\u2030]'
                 };
         }
@@ -708,7 +708,7 @@ module.exports = {
         return {
             deltaScale: Scale,
             deltaRatio: dRatio,
-            hydriteRatio: hRatio,
+            hydrideRatio: hRatio,
             color: color,
             labels: label,
             suffix: suffix

@@ -17,8 +17,8 @@ require('jquery-ui');
 var bootstrap = require('bootstrap'),
     base64 = require('urlsafe-base64');
 
-var ps = require('./common/asc_parser'),
-    pt = require('./common/plot');
+var ps = require('../common/asc_parser'),
+    pt = require('../common/plot');
 
 var defWinSize = remote.getGlobal('defaultWindowSize');
 var myPath = '';

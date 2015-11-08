@@ -23,7 +23,7 @@ require('crash-reporter').start();
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-var mainWindow = null;
+var plotterWindow = null;
 
 // Quit when all windows are closed.
 app.on('window-all-closed', function() {
@@ -38,7 +38,7 @@ app.on('window-all-closed', function() {
 // initialization and is ready to create browser windows.
 app.on('ready', function() {
     // Create the browser window.
-    mainWindow = new BrowserWindow({
+    plotterWindow = new BrowserWindow({
         'use-content-size': true,
         width: defaultWindowSize.width,
         height: defaultWindowSize.height,
@@ -50,24 +50,24 @@ app.on('ready', function() {
     });
 
     // and load the index.html of the app.
-    mainWindow.loadUrl('file://' + __dirname + '/index.html');
+    plotterWindow.loadUrl('file://' + __dirname + '/../renderer/plotter/plotter.html');
 
     // Open the DevTools.
-    // mainWindow.openDevTools();
+    // plotterWindow.openDevTools();
 
     // Emitted when the window is closed.
-    mainWindow.on('closed', function() {
+    plotterWindow.on('closed', function() {
         // Dereference the window object, usually you would store windows
         // in an array if your app supports multi windows, this is the time
         // when you should delete the corresponding element.
-        mainWindow = null;
+        plotterWindow = null;
     });
 
-    mainWindow.on('resize', function() {
-        mainWindow.webContents.send('window-resized', '');
+    plotterWindow.on('resize', function() {
+        plotterWindow.webContents.send('window-resized', '');
     });
 
-   mainWindow.setProgressBar(0.5);
+   plotterWindow.setProgressBar(0.5);
 
 });
 

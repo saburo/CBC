@@ -429,6 +429,10 @@ var adjustItemPosition = function(item) {
 var moveNext = function() {
     var list = $('.asc-file'),
         l = list.length, i = 0;
+    if ($('.current').length === 0) {
+        adjustItemPosition($(list[0]).click());
+        return;
+    }
     for (i=0;i<l;i++) {
         var li = $(list[i]);
         if (li.hasClass('current')) {

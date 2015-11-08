@@ -51,6 +51,7 @@ body {
 		height: 40px;
 		margin: 5px 5px 0 5px;
 		background:url(../img/logo2.png);
+		cursor: pointer;
 	}
 
 	.flags {

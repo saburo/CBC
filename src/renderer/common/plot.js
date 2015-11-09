@@ -26,7 +26,7 @@ module.exports = {
 
     data: {},
 
-    circleSize: 6,
+    circleSize: 5,
 
     printFlag: false, 
 
@@ -228,7 +228,7 @@ module.exports = {
         return {
             mean:   d3.mean(v), 
             stdev2: d3.deviation(v) * 2,
-            se2:  d3.deviation(v) / Math.sqrt(v.length),
+            se2:  (d3.deviation(v) * 2) / Math.sqrt(v.length),
             min:  d3.min(v),
             max:  d3.max(v)
         };

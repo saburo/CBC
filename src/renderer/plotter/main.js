@@ -8,6 +8,9 @@ var fs = require('fs'),
     app = remote.require('app');
 global.browserWindow = remote.require('browser-window');
 
+/**** Menu ****/
+require('./menu');
+
 var XLS = require('xlsx');
 global.$ = require('jquery');
 global.jQuery = global.$;
@@ -21,9 +24,11 @@ var ps = require('../common/asc_parser'),
     pt = require('../common/plot');
 
 var defWinSize = remote.getGlobal('defaultWindowSize');
-var myPath = '';
-var searchBase = [];
-var excelMultiFlag = [];
+var myPath = '',
+    configPath = path.join(app.getPath('userData'), 'preferences.json'),
+    searchBase = [],
+    excelMultiFlag = [];
+
 
 
 /**** IPCs ****/
@@ -187,15 +192,69 @@ var getConfig = function(param) {
     return out;
 };
 
+var parseConfig = function() {
+    var out = {};
+    var params = ['titles', 'plottypes', 'averages'];
+    params.forEach(function(v, i) {
+        out[v] = getConfig(v);
+    });
+    // out['papersize'] = $('#paperSize > option:selected').val();
+    // out['paperorientation'] = $('.paper-orientation > input:checked').val();
+
+    return out;
+};
+
+var setConfig = function(param, item, value) {
+    value = value || true;
+    $('.'+param + ' input[value=' + item + ']').prop('checked', value);
+    if (param==='plottypes' && (item==='hydride' || item==='delta')) {
+        $('.averages input[value=' + item + ']').prop('disabled', false);
+    }
+};
+
+var getConfigs = function() {
+    // set default values;
+    var out = {
+            titles: ['comment'], plottypes: ['cps','delta'], 
+            averages: ['delta'],
+        };
+    try {
+        out = JSON.parse(fs.readFileSync(configPath,'utf8'));
+    } catch(e) {
+        console.log('error: reading preference.json');
+    } 
+
+    return out;
+};
+
+var loadConfig = function() {
+    var conf = getConfigs();
+    $('#configModal input').prop('checked', false);
+    $('.averages input').prop('disabled', true);
+    $.each(conf, function(key, v) {
+        v.map(function(i) { setConfig(key, i) });
+    });
+};
+
+var saveConfig = function(conf) {
+    var confPath = path.join(app.getPath('userData'), 'preferences.json');
+    fs.writeFile(confPath, JSON.stringify(parseConfig()), 'utf8', function(err) {
+        if (err) throw err;
+        console.log('The "data was saved');
+        updateWindow();
+    });
+};
+
 var updatePlot = function(fileName, comm, mask) {
     var p = '';
     var d3 = require('d3');
     $('svg').html('');
+    var config = getConfigs();
     var options = {
-        plotType: getConfig('plottypes'),
+        plotType: config.plottypes,
         printFlag: false,
-        titleContents: getConfig('titles'),
-        averages: getConfig('averages'),
+        titleContents: config.titles,
+        averages: config.averages,
         maskedData: mask || pt.maskedData,
         margin: undefined, 
     };
@@ -286,6 +345,7 @@ var saveAsPDF = function () {
                 mask = pt.maskedData;
             }
         }
+        var plotConfig = getConfigs();
         var args = {
             dir: myPath, 
             Files: files,
@@ -293,14 +353,14 @@ var saveAsPDF = function () {
             paperSize: $('#paperSize > option:selected').val(),
             orientation: $('.paper-orientation > input:checked').val(),
             plotOptions: {
-                plotType: getConfig('plottypes'),
+                titleContents: plotConfig.titles,
+                plotType: plotConfig.plottypes,
+                averages: plotConfig.averages,
                 printFlag: true,
-                titleContents: getConfig('titles'),
-                averages: getConfig('averages'),
                 maskedData: mask, 
                 margin: {top: 60, right: 20, bottom: 35, left: 70},
             }
-        }
+        };
         updateSaveProgress();
         ipc.send('saveAsPDF', args);
     });
@@ -457,6 +517,7 @@ var movePrev = function() {
     }
 };
 
+
 /**** Event Listeners ****/
 $('.select-dir-btn').on('click', function() {
     var tmp = getDataDir();
@@ -476,6 +537,7 @@ $('#exportas').on('click', function() {
 });
 
 $('#preference').on('click', function() {
+    loadConfig();
     $('#configModal').modal('show');
 });
 
@@ -495,7 +557,7 @@ $('#print-btn').on('click', function() {
 });
 
 $('#save-config-btn').on('click', function() {
-    updateWindow();
+    saveConfig();
     $('#configModal').modal('hide');
     $(this).blur();
 });
@@ -522,10 +584,23 @@ $('#pageAll').on('click', function() {
     $('#datamasking').prop('disabled', true);
 });
 
+$('.plottypes input').on('click', function() {
+    var me = $(this);
+    console.log('here');
+    if (me.val() === 'hydride' || me.val() === 'delta') {
+        if (me.prop('checked')) {
+            $('.averages input[value='+me.val()+']').prop('disabled', false);
+        } else {
+            $('.averages input[value='+me.val()+']').prop('disabled', true);
+        }
+    }
+});
+
 // search
 $('.search-icon').on('click', function() {
     $('#search-word').focus();
 });
+
 $('#search-word').on('keyup', function() {
     // var kw = new RegExp(RegExp.escape($(this).val()),'ig');
     var kw = new RegExp($(this).val(),'ig');
@@ -566,257 +641,20 @@ $('#search-word').on('blur', function() {
     $('.search-box, .hit-numbers').removeClass('active');
 });
 
+// $('#configModal').on('hidden.bs.modal', function() {
+//     $('input').prop('checked', false);
+// });
+
 /**** Main routine (init) ****/
 
 $('.plottypes').sortable();
 $('.plottypes').disableSelection();
 $('.remove-icon, .hit-numbers').hide();
 // myPath = '/Users/saburo/Desktop/R/TEST_SIMS_DATA/20140624_d18O_garnet_stds_Kouki';
-myPath = '/Users/saburo/Desktop/R/TEST_SIMS_DATA/Miami';
+myPath = '/Users/saburo/Desktop/Data/data_asc_only';
 // myPath = getDataDir();
+// loadConfig();
 updateFileList(myPath);
 updateWindow();
+// console.log(app.getPath('userData'));
 
-
-/**** Menu ****/
-
-var Menu = remote.require('menu');
-var MenuItem = remote.require('menu-item');
-
-var template = [
-    {
-        label: 'File',
-        submenu: [
-            {
-                label: 'Open Data Directory…',
-                accelerator: 'CmdOrCtrl+O',
-                click: function(item, focusedWindow) {
-                    $('.select-dir-btn').click();
-                }
-            },
-            {
-                label: 'Export As…',
-                // accelerator: 'CmdOrCtrl+S',
-                click: function(item, focusedWindow) {
-                    $('#exportas').click();
-                }
-            }
-        ]
-    },
-  {
-    label: 'Edit',
-    submenu: [
-      {
-        label: 'Undo',
-        accelerator: 'CmdOrCtrl+Z',
-        role: 'undo'
-      },
-      {
-        label: 'Redo',
-        accelerator: 'Shift+CmdOrCtrl+Z',
-        role: 'redo'
-      },
-      {
-        type: 'separator'
-      },
-      {
-        label: 'Cut',
-        accelerator: 'CmdOrCtrl+X',
-        role: 'cut'
-      },
-      {
-        label: 'Copy',
-        accelerator: 'CmdOrCtrl+C',
-        role: 'copy'
-      },
-      {
-        label: 'Paste',
-        accelerator: 'CmdOrCtrl+V',
-        role: 'paste'
-      },
-      {
-        label: 'Select All',
-        accelerator: 'CmdOrCtrl+A',
-        role: 'selectall'
-      },
-    ]
-  },
-  {
-    label: 'View',
-    submenu: [
-      {
-        label: 'Reload',
-        accelerator: 'CmdOrCtrl+R',
-        click: function(item, focusedWindow) {
-          if (focusedWindow)
-            focusedWindow.reload();
-        }
-      },
-      {
-        label: 'Toggle Full Screen',
-        accelerator: (function() {
-          if (process.platform == 'darwin')
-            return 'Ctrl+Command+F';
-          else
-            return 'F11';
-        })(),
-        click: function(item, focusedWindow) {
-          if (focusedWindow)
-            focusedWindow.setFullScreen(!focusedWindow.isFullScreen());
-        }
-      },
-      {
-        label: 'Toggle Developer Tools',
-        accelerator: (function() {
-          if (process.platform == 'darwin')
-            return 'Alt+Command+I';
-          else
-            return 'Ctrl+Shift+I';
-        })(),
-        click: function(item, focusedWindow) {
-          if (focusedWindow)
-            focusedWindow.toggleDevTools();
-        }
-      },
-      {
-        label: 'Move Next Data',
-        accelerator: (function() {
-          if (process.platform == 'darwin')
-            return 'Shift+down';
-          else
-            return 'Ctrl+Shift+I';
-        })(),
-        click: function(item, focusedWindow) {
-          if (focusedWindow)
-            focusedWindow.webContents.send('move-next');
-        }
-      },
-      {
-        label: 'Move Previous Data',
-        accelerator: (function() {
-          if (process.platform == 'darwin')
-            return 'Shift+up';
-          else
-            return 'Ctrl+Shift+I';
-        })(),
-        click: function(item, focusedWindow) {
-          if (focusedWindow)
-            focusedWindow.webContents.send('move-prev');
-        }
-      },
-    ]
-  },
-  {
-    label: 'Window',
-    role: 'window',
-    submenu: [
-      {
-        label: 'Minimize',
-        accelerator: 'CmdOrCtrl+M',
-        role: 'minimize'
-      },
-      {
-        label: 'Close',
-        accelerator: 'CmdOrCtrl+W',
-        role: 'close'
-      },
-    ]
-  },
-  {
-    label: 'Help',
-    role: 'help',
-    submenu: [
-      {
-        label: 'Learn More',
-        click: function() { require('shell').openExternal('http://electron.atom.io') }
-      },
-    ]
-  },
-];
-
-if (process.platform == 'darwin') {
-  var name = remote.require('app').getName();
-  template.unshift({
-    label: name,
-    submenu: [
-      {
-        label: 'About ' + name,
-        role: 'about'
-      },
-      {
-        type: 'separator'
-      },
-      {
-        label: 'Preference',
-        accelerator: 'Command+,',
-        click: function() {
-            $('#preference').click();
-        }
-      },
-      {
-        label: 'Preference2',
-        accelerator: 'Command+.',
-        click: function() {
-            var bw = new browserWindow({
-                height: 500,
-                width: 500,
-                'min-height': 500,
-                'min-width': 500,
-                'always-on-top': true
-            });
-            bw.loadUrl('file://' + __dirname + '/../preference/preference.html');
-            bw.on('closed', function() {
-                bw = null;
-            });
-            bw.openDevTools();
-
-        }
-      },
-      {
-        type: 'separator' 
-      },
-      {
-        label: 'Services',
-        role: 'services',
-        submenu: []
-      },
-      {
-        type: 'separator'
-      },
-      {
-        label: 'Hide ' + name,
-        accelerator: 'Command+H',
-        role: 'hide'
-      },
-      {
-        label: 'Hide Others',
-        accelerator: 'Command+Shift+H',
-        role: 'hideothers'
-      },
-      {
-        label: 'Show All',
-        role: 'unhide'
-      },
-      {
-        type: 'separator'
-      },
-      {
-        label: 'Quit',
-        accelerator: 'Command+Q',
-        click: function() { app.quit(); }
-      },
-    ]
-  });
-  // Window menu.
-  template[3].submenu.push(
-    {
-      type: 'separator'
-    },
-    {
-      label: 'Bring All to Front',
-      role: 'front'
-    }
-  );
-}
-
-Menu.setApplicationMenu(Menu.buildFromTemplate(template));

@@ -57,6 +57,7 @@ ipc.on('async-reply-getPrintPDFArgs', function(args) {
 
         fs.readFile(path.join(myPath, args.Files[i].name), 'utf8', function(err, data) {
             if (err) throw err;
+            console.log(args.plotOptions);
             var p = ps.parseAsc(data);
             var o = myList[p.ascName];
             pt.excelComment = o.comment;

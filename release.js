@@ -17,9 +17,9 @@ packager({
     'app-version': config.version,
     'helper-bundle-id': 'edu.wisc.geology.wiscsims', //<- 自分のドメインなどを使用してください
     overwrite: true,
-    asar: true,
+    asar: false,
     prune: false,
-    ignore: "node_modules/(electron-packager|electron-prebuilt|\.bin)|release\.js|\.DS_Store",
+    // ignore: "node_modules/(electron-packager|electron-prebuilt|\.bin)|release\.js|\.DS_Store",
     'version-string': {
         CompanyName: 'WiscSIMS',
         FileDescription: 'Cycle by cycle plot for isotope monkeys',

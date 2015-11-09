@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Cycle by Cycle Plot for SIMS (Strict Isotope MonkeyS)</title>
+  <title>Cycle by Cycle Plot for SIMS (Stable Isotope MonkeyS)</title>
   <link rel="stylesheet" type="text/css" href="../../../static/css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="../../../static/css/main.css">
   <link rel="stylesheet" type="text/css" href="../../../static/css/svg.css">
@@ -22,10 +22,10 @@
     <div class="pull-right toolbar-btn export-btn" style="" id="exportas" title="Export As…">
       <span style="font-size: 26px; color: white;" class="glyphicon glyphicon-save"></span>
     </div>
-    <div class="pull-right toolbar-btn export-btn" style="" id="dataexportas" title="Export data">
+<!--     <div class="pull-right toolbar-btn export-btn" style="" id="dataexportas" title="Export data">
       <span style="font-size: 26px; color: white;" class="glyphicon glyphicon-export"></span>
     </div>
-    
+ -->    
   </div>
   <!-- /Tool bar -->
 
@@ -74,7 +74,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title" id="PrintConfigLabel">Save Plot(s)</h4>
+          <h4 class="modal-title" id="PrintConfigLabel">Export Plot(s)</h4>
         </div>
         <div class="modal-body">
           <form class="form-horizontal">
@@ -166,7 +166,7 @@
               <div class="col-sm-7">
                 <div class="checkbox">
                   <label>
-                    <input type="checkbox" id="inlineCheckbox1" value="comment" checked> Comment
+                    <input type="checkbox" id="inlineCheckbox1" value="comment"> Comment
                   </label>
                 </div>
 
@@ -182,13 +182,13 @@
               <label for="plot-types" class="control-label col-sm-5">Plot Types:</label>
               <div class="col-sm-7 plottypes">
                 <div class="checkbox">
-                  <label> <input type="checkbox" value="cps" checked> cps </label>
+                  <label> <input type="checkbox" value="cps" > cps </label>
                 </div>
                 <div class="checkbox">
-                  <label> <input type="checkbox" value="hydride" checked> hydride ratio </label>
+                  <label> <input type="checkbox" value="hydride" > hydride ratio </label>
                 </div>
                 <div class="checkbox">
-                  <label> <input type="checkbox" value="delta" checked> delta </label>
+                  <label> <input type="checkbox" value="delta" > delta </label>
                 </div>
               </div>
             </div>
@@ -196,10 +196,10 @@
               <label for="" class="control-label col-sm-5">Averages:</label>
               <div class="col-sm-7 averages">
                 <div class="checkbox">
-                  <label> <input type="checkbox" value="hydride" checked> hydride ratio </label>
+                  <label> <input type="checkbox" value="hydride" > hydride ratio </label>
                 </div>
                 <div class="checkbox">
-                  <label> <input type="checkbox" value="delta" checked> delta </label>
+                  <label> <input type="checkbox" value="delta" > delta </label>
                 </div>
               </div>
             </div>

@@ -19,10 +19,10 @@ packager({
     overwrite: true,
     asar: false,
     prune: false,
-    // ignore: "node_modules/(electron-packager|electron-prebuilt|\.bin)|release\.js|\.DS_Store",
+    ignore: "node_modules/(electron-packager|electron-prebuilt|\.bin)|release\.js|\.DS_Store",
     'version-string': {
         CompanyName: 'WiscSIMS',
-        FileDescription: 'Cycle by cycle plot for isotope monkeys',
+        FileDescription: 'Cycle by cycle plot for Stable Isotope MonkeyS',
         OriginalFilename: config.name,
         FileVersion: config.version,
         ProductVersion: config.version,

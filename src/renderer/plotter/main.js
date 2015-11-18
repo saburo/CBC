@@ -26,6 +26,7 @@ var ps = require('../common/asc_parser'),
 
 var defWinSize = remote.getGlobal('defaultWindowSize');
 var myPath = '',
+    myExcelFile = undefined,
     configPath = path.join(app.getPath('userData'), 'preferences.json'),
     searchBase = [],
     configStates = {},
@@ -57,7 +58,7 @@ RegExp.escape = function( value ) {
      return value.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, "\\$&");
 };
 
-var updateFileList = function(myDir, myExcel) {
+var updateFileList = function(myDir, myExcel, cb) {
     $('#asc-list').html('<li class="asc-file">Loading...</li>');
     fs.readdir(myDir, function(err, list) {
         var ExcelCommentFlag = 1,
@@ -108,6 +109,7 @@ var updateFileList = function(myDir, myExcel) {
                 show: true
             })
         }
+        if (cb !== undefined) cb();
     });
 };
 
@@ -168,7 +170,7 @@ var getExcelCommentList = function(list, excelPath) {
         myComments = parseExcelComments(path.join(myPath, mySpreadSheet[0]));
     } else if (mySpreadSheet.length > 1) {
         excelMultiFlag = mySpreadSheet;
-    } 
+    }
     if (excelPath === undefined && ascList.length !== Object.keys(myComments).length) {
         if (Object.keys(myComments).length > 0) {
             excelMultiFlag = mySpreadSheet;
@@ -183,6 +185,19 @@ var getComment = function(filename) {
     var data = fs.readFileSync(filename, 'utf8'),
     p = ps.parseAsc(data);
     return p.comment;
+};
+
+var reloadFolderItems = function() {
+  var current = $('.current')
+  updateFileList(myPath, myExcelFile, function() {
+    var list = $('.asc-file');
+    for(var i=0; i<list.length; i++) {
+      if ($(list[i]).attr('data-asc') !== current.attr('data-asc')) continue;
+      adjustItemPosition($(list[i]).addClass('current'));
+      return;
+    }
+    $('svg').html('');
+  });
 };
 
 var getConfig = function(param) {
@@ -217,14 +232,14 @@ var setConfig = function(param, item, value) {
 var getConfigs = function() {
     // set default values;
     var out = {
-            titles: ['comment'], plottypes: ['cps','delta'], 
+            titles: ['comment'], plottypes: ['cps','delta'],
             averages: ['delta'],
         };
     try {
         out = JSON.parse(fs.readFileSync(configPath,'utf8'));
     } catch(e) {
         console.log('error: reading preference.json');
-    } 
+    }
 
     return out;
 };
@@ -352,7 +367,7 @@ var saveAsPDF = function () {
         }
         var plotConfig = getConfigs();
         var args = {
-            dir: myPath, 
+            dir: myPath,
             Files: files,
             destPath: destPath,
             paperSize: $('#paperSize > option:selected').val(),
@@ -362,7 +377,7 @@ var saveAsPDF = function () {
                 plotType: plotConfig.plottypes,
                 averages: plotConfig.averages,
                 printFlag: true,
-                maskedData: mask, 
+                maskedData: mask,
                 margin: {top: 60, right: 20, bottom: 35, left: 70},
             }
         };
@@ -442,7 +457,7 @@ function svg_to_img(html, pt, destPath, format) {
     } else if (typeof svg.xml != "undefined") {
         var svgData = svg.xml;
     }
-    
+
     var canvas = document.createElement("canvas");
     var svgSize = svg.getBoundingClientRect();
     canvas.width = pt.width();
@@ -458,7 +473,7 @@ function svg_to_img(html, pt, destPath, format) {
         img.remove();
         fs.writeFile(destPath, base64.decode(b64img), function(err) {
             if (err) { dialog.showErrorBox("ERROR", "File has not been saved"); }
-            completeProgressBar(); 
+            completeProgressBar();
         });
     };
 };
@@ -537,7 +552,7 @@ var initConfigInputs = function() {
 
 
 /**** Event Listeners ****/
-//--- toolbar  
+//--- toolbar
 $('#exportas').on('click', function() {
     $('#exportModal').modal('show');
 });
@@ -552,7 +567,7 @@ $('.select-dir-btn').on('click', function() {
     if (tmp) {
         myPath = tmp;
         resetSearchBox();
-        updateFileList(myPath);
+        updateFileList(myPath, myExcelFile);
         $('#folderName').text(path.basename(myPath))
         $(this).attr('title', myPath);
         $('svg').html('');
@@ -599,8 +614,8 @@ $('.remove-icon').on('click', function() {
 //--- Modals
 // excel select modal
 $('#select-excel-file').on('click', function() {
-    var retval = $('#commentExcel > option:selected').val();
-    updateFileList(myPath, retval);
+    myExcelFile = $('#commentExcel > option:selected').val();
+    updateFileList(myPath, myExcelFile);
     $('#selectExcelModal').modal('hide');
 });
 
@@ -670,6 +685,11 @@ $('#pageAll').on('click', function() {
     $('#datamasking').prop('disabled', true);
 });
 
+$('.refresh-icon').on('click', function(event) {
+  event.stopPropagation();
+  reloadFolderItems();
+});
+
 // misc
 
 
@@ -681,10 +701,16 @@ $('#configModal').draggable({
     handle: ".modal-header"
 });
 // myPath = '/Users/saburo/Desktop/R/TEST_SIMS_DATA/20140624_d18O_garnet_stds_Kouki';
-myPath = '/Users/saburo/Desktop/Data/data_asc_only';
-// myPath = getDataDir();
-
+// myPath = '/Users/saburo/Desktop/Data/data_asc_only';
+var tmp = getDataDir();
+if (tmp) {
+    myPath = tmp;
+    resetSearchBox();
+    updateFileList(myPath, myExcelFile);
+    $('#folderName').text(path.basename(myPath))
+    $(this).attr('title', myPath);
+    $('svg').html('');
+}
 initConfigInputs();
-updateFileList(myPath);
+updateFileList(myPath, myExcelFile);
 updateWindow(ipc.sendSync('getContentSize'));
-

@@ -22,7 +22,7 @@ body {
 /*	background: #24557F;
 	background: #1364a9;
 	background: #6B8AB9;
-*/	
+*/
 	background: #2f71a9;
 	padding-right: 20px;
 	box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.5);
@@ -71,8 +71,8 @@ body {
 .main {
 	position: relative;
 	width: 100%;
-	margin: 0; 
-	padding: 0; 
+	margin: 0;
+	padding: 0;
 	background: #ccc;
 	overflow: hidden;
 }
@@ -111,9 +111,16 @@ body {
 	width: 25px;
 	margin: 8px 0 0 8px;
 }
+
+.refresh-icon {
+	top: 8px;
+  right: 2px;
+}
+
 .folder-name {
 	width: 220px;
 	margin-left: 33px;
+	padding-right: 20px;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -133,7 +140,7 @@ body {
 	padding: 0;
 }
 .search-word {
-	width: 200px; 
+	width: 200px;
 	margin: 5px 0 0 33px;
 	padding: 0 0 0 3px;
 	font-size: 16px;
@@ -146,7 +153,7 @@ body {
 
 	color: white;
 	/*color: #666;*/
-	border: none; 
+	border: none;
 	/*border-bottom: 1px solid #999;*/
 	/*border-bottom: 1px solid #255985;*/
 	border-bottom: 1px solid #b7b7b7;
@@ -273,7 +280,7 @@ body {
 	background: #fff;
 }
 /*.modal.fade.nofly {
-    top: 10%;        
+    top: 10%;
     -webkit-transition: opacity 0.3s linear;
     -moz-transition: opacity 0.3s linear;
     -o-transition: opacity 0.3s linear;

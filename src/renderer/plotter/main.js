@@ -21,12 +21,14 @@ var bootstrap = require('bootstrap'),
     base64 = require('urlsafe-base64');
 
 var ps = require('../common/asc_parser'),
-    pt = require('../common/plot');
+    // pt = require('../common/plot');
+    pt = require('../common/plot2');
 
 var defWinSize = remote.getGlobal('defaultWindowSize');
 var myPath = '',
     configPath = path.join(app.getPath('userData'), 'preferences.json'),
     searchBase = [],
+    configStates = {},
     excelMultiFlag = [];
 
 
@@ -38,8 +40,8 @@ ipc.on('async-reply-print-done', function(status) {
     completeProgressBar();
 });
 
-ipc.on('window-resized', function() {
-    updateWindow();
+ipc.on('window-resized', function(winSize) {
+    updateWindow(winSize);
 });
 
 ipc.on('move-next', function() {
@@ -228,10 +230,10 @@ var getConfigs = function() {
 };
 
 var loadConfig = function() {
-    var conf = getConfigs();
+    configStates = $('#configModal .modal-body').html();
     $('#configModal input').prop('checked', false);
     $('.averages input').prop('disabled', true);
-    $.each(conf, function(key, v) {
+    $.each(getConfigs(), function(key, v) {
         v.map(function(i) { setConfig(key, i) });
     });
 };
@@ -240,46 +242,49 @@ var saveConfig = function(conf) {
     var confPath = path.join(app.getPath('userData'), 'preferences.json');
     fs.writeFile(confPath, JSON.stringify(parseConfig()), 'utf8', function(err) {
         if (err) throw err;
-        console.log('The "data was saved');
-        updateWindow();
+        updatePlot();
+    });
+};
+
+var intersect = function(a, b) {
+    return a.filter(function(e) {
+        return $.inArray(e, b)>-1 ? true : false;
     });
 };
 
 var updatePlot = function(fileName, comm, mask) {
     var p = '';
-    var d3 = require('d3');
-    $('svg').html('');
     var config = getConfigs();
-    var options = {
-        plotType: config.plottypes,
-        printFlag: false,
-        titleContents: config.titles,
-        averages: config.averages,
-        maskedData: mask || pt.maskedData,
-        margin: undefined, 
-    };
-
-    fs.readFile(path.join(myPath, fileName), 'utf8', function(err, data) {
-        if (err) throw err;
-        p = ps.parseAsc(data);
-        if (comm) pt.excelComment = comm;
-        pt.ascFileName = fileName;
-        pt.makePlot(d3.select('svg'), p, options);
-    });
-};
-
-var updateWindow = function() {
-    pt.width = $(document).width() - $('#list').width();
-    pt.height = $(document).height() - $('#toolbar').height();
-
-    if ($('.current').length) {
-        var fname = $('.current').attr('data-asc'),
-        Comm = pt.excelComment;
-        updatePlot(fname, Comm);
+    pt.plottype(config.plottypes)
+        .average(intersect(config.averages, config.plottypes))
+        .title(config.titles)
+    if (fileName) {
+        fs.readFile(path.join(myPath, fileName), 'utf8', function(err, data) {
+            if (err) throw err;
+            p = ps.parseAsc(data);
+            if (comm) pt.comment(comm);
+            pt.setData(p).maskedData(mask).filename(fileName).draw('#myPlot');
+        });
+    } else {
+        pt.draw('#myPlot');
     }
-    $('#graph, #main, #list').css('height', pt.height +'px');
-    $('.asc-list').css('height', (pt.height - $('.aux').height()) + 'px')
 };
+
+var updateWindow = function(winSize) {
+    pt.width(winSize[0] - $('#list').width());
+    pt.height(winSize[1] - $('#toolbar').height());
+    $('#graph, #main, #list').css('height', pt.height() +'px');
+    $('.asc-list').css('height', (pt.height() - $('.aux').height()) + 'px')
+    if (pt.filename()) pt.draw('#myPlot');
+};
+
+var previewPlot = function() {
+    var conf = parseConfig();
+    pt.title(conf.titles)
+        .plottype(conf.plottypes)
+        .average(conf.averages)
+        .draw('#myPlot');
+}
 
 var getDataDir = function(defaultDir) {
     defaultDir = defaultDir || app.getPath('userDesktop');
@@ -440,8 +445,8 @@ function svg_to_img(html, pt, destPath, format) {
     
     var canvas = document.createElement("canvas");
     var svgSize = svg.getBoundingClientRect();
-    canvas.width = pt.width;
-    canvas.height = pt.height;
+    canvas.width = pt.width();
+    canvas.height = pt.height();
     var ctx = canvas.getContext("2d");
     var img = document.createElement("img");
     img.setAttribute("src", "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData))) );
@@ -478,7 +483,6 @@ var resetSearchBox = function() {
     $('#search-word').val('');
     $('.asc-file').removeClass('hide');
     $('.hit-numbers').slideUp(200).html('').hide()
-    // $('.active').removeClass('active');
 };
 
 var adjustItemPosition = function(item) {
@@ -517,8 +521,32 @@ var movePrev = function() {
     }
 };
 
+var initConfigInputs = function() {
+    $('.plottypes, .titles').sortable({
+        update: function(e, ui) {previewPlot();}
+    }).disableSelection();
+    $('#configModal input').on('change', function() {
+        var me = $(this);
+        if ($.inArray(me.val(), ['hydride', 'delta'])>-1) {
+            var bool = me.prop('checked') ? false : true;
+            $('.averages input[value='+me.val()+']').prop('disabled', bool);
+        }
+        previewPlot();
+    });
+}
+
 
 /**** Event Listeners ****/
+//--- toolbar  
+$('#exportas').on('click', function() {
+    $('#exportModal').modal('show');
+});
+
+$('#wiscsims').on('click', function() {
+    $('.flags').toggleClass("on", 800);
+});
+
+//--- list
 $('.select-dir-btn').on('click', function() {
     var tmp = getDataDir();
     if (tmp) {
@@ -530,70 +558,6 @@ $('.select-dir-btn').on('click', function() {
         $('svg').html('');
     }
     $(this).blur();
-});
-
-$('#exportas').on('click', function() {
-    $('#exportModal').modal('show');
-});
-
-$('#preference').on('click', function() {
-    loadConfig();
-    $('#configModal').modal('show');
-});
-
-
-$('#print-btn').on('click', function() {
-    var fmt = $('.format > input:checked').val()
-    if (fmt === 'pdf') {
-        saveAsPDF();
-    } else if (fmt === 'svg'){
-        saveAsSVG();
-    } else if (fmt === 'png') {
-        saveAsSVG('png');
-    } else if (fmt === 'jpeg') {
-        saveAsSVG('jpeg');
-    }
-    $(this).blur();
-});
-
-$('#save-config-btn').on('click', function() {
-    saveConfig();
-    $('#configModal').modal('hide');
-    $(this).blur();
-});
-
-$('#fileformatSVG, #fileformatPNG, #fileformatJPG').on('click', function() {
-    $('#pageCurrent').prop('checked', true);
-    $('#pageAll').prop('disabled', true);
-    $('.paper-orientation > input').prop('disabled',true);
-    $('.paper-size').prop('disabled',true);
-});
-
-$('#fileformatPDF').on('click', function() {
-    $('#pageAll').prop('checked', true);
-    $('#pageAll').prop('disabled', false);
-    $('.paper-orientation > input').prop('disabled', false);
-    $('.paper-size').prop('disabled', false);
-});
-
-$('#pageCurrent').on('click', function() {
-    $('#datamasking').prop('disabled', false);
-});
-
-$('#pageAll').on('click', function() {
-    $('#datamasking').prop('disabled', true);
-});
-
-$('.plottypes input').on('click', function() {
-    var me = $(this);
-    console.log('here');
-    if (me.val() === 'hydride' || me.val() === 'delta') {
-        if (me.prop('checked')) {
-            $('.averages input[value='+me.val()+']').prop('disabled', false);
-        } else {
-            $('.averages input[value='+me.val()+']').prop('disabled', true);
-        }
-    }
 });
 
 // search
@@ -620,41 +584,107 @@ $('#search-word').on('keyup', function() {
    }
 });
 
+$('#search-word').on('focus', function() {
+    $('.search-box, .hit-numbers').addClass('active');
+});
+
+$('#search-word').on('blur', function() {
+    $('.search-box, .hit-numbers').removeClass('active');
+});
+
 $('.remove-icon').on('click', function() {
     resetSearchBox();
 });
 
+//--- Modals
+// excel select modal
 $('#select-excel-file').on('click', function() {
     var retval = $('#commentExcel > option:selected').val();
     updateFileList(myPath, retval);
     $('#selectExcelModal').modal('hide');
 });
 
-$('#wiscsims').on('click', function() {
-    $('.flags').toggleClass("on", 800);
+// plot config
+$('.plottypes input').on('click', function() {
+    var me = $(this);
+    if (me.val() === 'hydride' || me.val() === 'delta') {
+        if (me.prop('checked')) {
+            $('.averages input[value='+me.val()+']').prop('disabled', false);
+        } else {
+            $('.averages input[value='+me.val()+']').prop('disabled', true);
+        }
+    }
 });
 
-$('#search-word').on('focus', function() {
-    $('.search-box, .hit-numbers').addClass('active');
-});
-$('#search-word').on('blur', function() {
-    $('.search-box, .hit-numbers').removeClass('active');
+$('#preference').on('click', function() {
+    loadConfig();
+    $('#configModal').modal('show');
 });
 
-// $('#configModal').on('hidden.bs.modal', function() {
-//     $('input').prop('checked', false);
-// });
+$('#save-config-btn').on('click', function() {
+    saveConfig();
+    $('#configModal').modal('hide');
+    configStates = '';
+    $(this).blur();
+});
+
+$('#cancel-config-btn').on('click', function() {
+    $('#configModal .modal-body').html(configStates);
+    initConfigInputs();
+});
+
+// export config
+$('#print-btn').on('click', function() {
+    var fmt = $('.format > input:checked').val()
+    if (fmt === 'pdf') {
+        saveAsPDF();
+    } else if (fmt === 'svg'){
+        saveAsSVG();
+    } else if (fmt === 'png') {
+        saveAsSVG('png');
+    } else if (fmt === 'jpeg') {
+        saveAsSVG('jpeg');
+    }
+    $(this).blur();
+});
+
+$('#fileformatSVG, #fileformatPNG, #fileformatJPG').on('click', function() {
+    $('#pageCurrent').prop('checked', true);
+    $('#pageAll').prop('disabled', true);
+    $('.paper-orientation > input').prop('disabled',true);
+    $('.paper-size').prop('disabled',true);
+});
+
+$('#fileformatPDF').on('click', function() {
+    $('#pageAll').prop('checked', true);
+    $('#pageAll').prop('disabled', false);
+    $('.paper-orientation > input').prop('disabled', false);
+    $('.paper-size').prop('disabled', false);
+});
+
+$('#pageCurrent').on('click', function() {
+    $('#datamasking').prop('disabled', false);
+});
+
+$('#pageAll').on('click', function() {
+    $('#datamasking').prop('disabled', true);
+});
+
+// misc
+
+
 
 /**** Main routine (init) ****/
 
-$('.plottypes').sortable();
-$('.plottypes').disableSelection();
 $('.remove-icon, .hit-numbers').hide();
+$('#configModal').draggable({
+    handle: ".modal-header"
+});
 // myPath = '/Users/saburo/Desktop/R/TEST_SIMS_DATA/20140624_d18O_garnet_stds_Kouki';
 myPath = '/Users/saburo/Desktop/Data/data_asc_only';
 // myPath = getDataDir();
-// loadConfig();
+
+initConfigInputs();
 updateFileList(myPath);
-updateWindow();
-// console.log(app.getPath('userData'));
+updateWindow(ipc.sendSync('getContentSize'));
 

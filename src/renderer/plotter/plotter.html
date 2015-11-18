@@ -31,7 +31,7 @@
 
   <!-- main -->
   <div id="main" class="main">
-    <div id="graph" class="graph-area"><svg></svg></div>
+    <div id="graph" class="graph-area"><svg id="myPlot"></svg></div>
     <div id="list" class="list-area">
       <div class="aux">
         <div class="select-dir-btn">
@@ -161,9 +161,9 @@
         </div>
         <div class="modal-body">
           <form class="form-horizontal">
-            <div class="form-group titles">
+            <div class="form-group">
               <label for="fileformat" class="control-label col-sm-5">Title:</label>
-              <div class="col-sm-7">
+              <div class="col-sm-7 titles">
                 <div class="checkbox">
                   <label>
                     <input type="checkbox" id="inlineCheckbox1" value="comment"> Comment
@@ -206,7 +206,7 @@
           </form>
           </div> <!-- /modal-body -->
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal" id="cancel-config-btn">Cancel</button>
           <button type="button" class="btn btn-primary" id="save-config-btn">Save</button>
         </div>
       </div>

@@ -64,7 +64,7 @@ app.on('ready', function() {
     });
 
     plotterWindow.on('resize', function() {
-        plotterWindow.webContents.send('window-resized', '');
+        plotterWindow.webContents.send('window-resized', plotterWindow.getContentSize());
     });
 
    plotterWindow.setProgressBar(0.5);
@@ -93,7 +93,7 @@ ipc.on('saveAsPDF', function(e, arg) {
         printWin = null;
     });
     printWin.loadUrl('file://' + __dirname + '/../renderer/printer/print.html');
-    // printWin.openDevTools();
+    printWin.openDevTools();
 });
 
 ipc.on('current-rendering', function(e, arg) {
@@ -112,10 +112,14 @@ ipc.on('rendering-done', function(e, arg) {
         fs.writeFile(printPDF_args.destPath, data, function(err) {
             if(err) alert('genearte pdf error', err)
             savePDFEvent.sender.send('async-reply-print-done', true);
-            printWin.close();
+            // printWin.close();
         });
     });
 });
+
+ipc.on('getContentSize', function(event) {
+    event.returnValue = plotterWindow.getContentSize();
+})
 
 
 

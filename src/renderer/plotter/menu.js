@@ -1,7 +1,9 @@
+'use strict';
 
 var remote = require('remote'),
     Menu = remote.require('menu'),
-    MenuItem = remote.require('menu-item');
+    MenuItem = remote.require('menu-item'),
+    app = remote.require('app');
 
 var template = [
     {
@@ -22,7 +24,7 @@ var template = [
                 }
             }
         ]
-    },
+  },
   {
     label: 'Edit',
     submenu: [
@@ -173,27 +175,27 @@ if (process.platform == 'darwin') {
             $('#preference').click();
         }
       },
+      // {
+      //   label: 'Preference2',
+      //   accelerator: 'Command+.',
+      //   click: function() {
+      //       var bw = new browserWindow({
+      //           height: 500,
+      //           width: 500,
+      //           'min-height': 500,
+      //           'min-width': 500,
+      //           'always-on-top': true
+      //       });
+      //       bw.loadUrl('file://' + __dirname + '/../preference/preference.html');
+      //       bw.on('closed', function() {
+      //           bw = null;
+      //       });
+      //       bw.openDevTools();
+      //
+      //   }
+      // },
       {
-        label: 'Preference2',
-        accelerator: 'Command+.',
-        click: function() {
-            var bw = new browserWindow({
-                height: 500,
-                width: 500,
-                'min-height': 500,
-                'min-width': 500,
-                'always-on-top': true
-            });
-            bw.loadUrl('file://' + __dirname + '/../preference/preference.html');
-            bw.on('closed', function() {
-                bw = null;
-            });
-            bw.openDevTools();
-
-        }
-      },
-      {
-        type: 'separator' 
+        type: 'separator'
       },
       {
         label: 'Services',

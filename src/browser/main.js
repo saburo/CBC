@@ -37,12 +37,13 @@ app.on('window-all-closed', function() {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 app.on('ready', function() {
+    // require('../renderer/plotter/menu');
     // Create the browser window.
     plotterWindow = new BrowserWindow({
         'use-content-size': true,
         width: defaultWindowSize.width,
         height: defaultWindowSize.height,
-        'min-width': defaultWindowSize.width, 
+        'min-width': defaultWindowSize.width,
         'min-height': defaultWindowSize.height,
         'web-preferences': {
             'overlay-scrollbars': true
@@ -120,6 +121,3 @@ ipc.on('rendering-done', function(e, arg) {
 ipc.on('getContentSize', function(event) {
     event.returnValue = plotterWindow.getContentSize();
 })
-
-
-

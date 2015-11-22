@@ -566,6 +566,7 @@ $('.select-dir-btn').on('click', function() {
     var tmp = getDataDir();
     if (tmp) {
         myPath = tmp;
+        myExcelFile = undefined;
         resetSearchBox();
         updateFileList(myPath, myExcelFile);
         $('#folderName').text(path.basename(myPath))

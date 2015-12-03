@@ -23,9 +23,9 @@ ipc.on('async-reply-getPrintPDFArgs', function(args) {
         sizeS = 0;
 
     if (args.paperSize === 'A4') {
-        sizeL = 11.7, sizeS = 8.3; // in inches
+        sizeL = 11.7; sizeS = 8.3; // in inches
     } else if (args.paperSize === 'Letter') {
-        sizeL = 11, sizeS = 8.5; // in inches
+        sizeL = 11; sizeS = 8.5; // in inches
     }
 
     if (args.orientation === 'portrait') {
@@ -38,10 +38,9 @@ ipc.on('async-reply-getPrintPDFArgs', function(args) {
     pt.title(args.plotOptions.titleContents)
       .average(args.plotOptions.averages)
       .plottype(args.plotOptions.plotType)
-      .maskedData(args.plotOptions.mask)
+      .maskedData(args.plotOptions.maskedData)
       .printflag(args.plotOptions.printFlag)
       .margin(args.plotOptions.margin);
-
     var myList = {};
     var total = args.Files.length;
     for (i in args.Files) {
@@ -54,7 +53,7 @@ ipc.on('async-reply-getPrintPDFArgs', function(args) {
             var p = ps.parseAsc(data),
                 o = myList[p.ascName],
                 myId = p.ascName.replace(/\.asc/, '').replace(/@/, '-');
-            
+
             var svg = d3.select('#print_area')
                         .append('svg').attr('id', 'svg-' + myId)
                         .classed('sep_pages', true);

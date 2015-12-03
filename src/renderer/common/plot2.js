@@ -6,8 +6,8 @@ module.exports = function () {
 	var svg,
 		data,
 		stat,
-		filename = undefined,
-		comment = undefined,
+		filename,
+		comment,
 		printFlag = false,
 		frameWidth = 980,
 		frameHeight = 680,
@@ -22,11 +22,10 @@ module.exports = function () {
 		myPlot = {},
 
 
-
 		PDB = 0.0112372,
 		VSMOW = 0.00200520;
 
-	function my() {};
+	function my() {}
 
 	my.height = function(value) {
 		if (!arguments.length) return frameHeight;
@@ -69,10 +68,10 @@ module.exports = function () {
 	};
 
 	my.setData = function(values) {
-		data = values
+		data = values;
 		stat = data.stat;
 		config = isotopeSysConfig();
-		data['plotData'] = makePlotData(data);
+		data.plotData = makePlotData(data);
 
 		return my;
 	};
@@ -126,41 +125,111 @@ module.exports = function () {
 	};
 
 	my.updateAverage = function() {
+		var obj, myStat, avLine, avText, l;
+		var aves =
 		averages.forEach(function(t, i) {
-			var obj = myPlot[t];
-			var stat = calcAverage(t),
-				avLine = obj.select('.average-line'),
-				avText = obj.select('.average-text'),
-				l = data.plotData.length;
+			if (plottypes.indexOf(t) === -1) return;
+			obj = myPlot[t];
+			myStat = calcAverage(t);
+			avLine = obj.select('.average-line');
+			avText = d3.select('.average-text.average-text-'+t);
+			l = data.plotData.length;
 
 			if (avLine.empty()) {
-				avLine = obj.append('g').append('line').classed('average-line', true);
-				var yVal= (printFlag) ? stat.mean : stat.min
-				avLine.attr({
-					x1: myScale[t].x(1), x2: myScale[t].x(l),
-					y1: myScale[t].y(yVal), y2: myScale[t].y(yVal),
-					fill: 'none',
-					stroke: config.color[t],
-					'stroke-width': 1,
-					'stroke-dasharray': ("6, 3")
-				});
+				var yVal;
+				if (t === 'cps') {
+					d3.keys(stat).forEach(function(v, i) {
+						avLine = obj.append('g').append('line').classed('average-line average-line-'+v.replace(' ', ''), true);
+						yVal = (printFlag) ? myStat[v].mean : myStat[v].min;
+						avLine.attr({
+							x1: myScale[t].x(1), x2: myScale[t].x(l),
+							y1: myScale[t].y(yVal), y2: myScale[t].y(yVal),
+							fill: 'none',
+							stroke: config.color.cps[v],
+							'stroke-width': 1,
+							'stroke-dasharray': ("6, 3")
+						});
+					});
+				} else {
+					avLine = obj.append('g').append('line').classed('average-line', true);
+					yVal = (printFlag) ? myStat.mean : myStat.min;
+					avLine.attr({
+						x1: myScale[t].x(1), x2: myScale[t].x(l),
+						y1: myScale[t].y(yVal), y2: myScale[t].y(yVal),
+						fill: 'none',
+						stroke: config.color[t],
+						'stroke-width': 1,
+						'stroke-dasharray': ("6, 3")
+					});
+				}
 			}
-			if (avText.empty()) {
-				avText = obj.append('g').append('text').classed('average-text', true);
+
+			if (avText.empty() && t !== 'cps') {
+				avText = d3.select('.chart-frame')
+									.append('g')
+									.append('text').classed('average-text average-text-' + t, true);
+				// avText = obj.append('g').append('text').classed('average-text', true);
+				var parentPos = myPlot[t].attr('transform').match(/([\.\-\d]+)/ig);
 				avText.attr({
 					fill: config.color[t],
 					'font-size': '12px',
 					'text-anchor': 'end',
-					x: myScale[t].x(l), y: 20
+					x: myScale[t].x(l) + parentPos[0]/1,
+					y: parentPos[1]/1 + 20
+				})
+				.on('click', function() {
+					var myOrder;
+					var myStat = calcAverage(t);
+					if (t === 'delta') {
+						myOrder = 1;
+					} else if (t === 'hydride') {
+						myOrder = Math.pow(10, config.order.hydride);
+					}
+					copyDataToClickBoard(myStat.mean * myOrder + '\t' + myStat.se2 * myOrder);
 				});
 			}
-			avLine.transition().ease('elastic').duration(500)
-				.attr({y1: myScale[t].y(stat.mean), y2: myScale[t].y(stat.mean)});
-			var suffix = (t==='hydride') ? ' [\u00D7E' + config.order.hydride + ']' : ' [\u2030]';
-			avText.text('Average & 2SE: ' + f02(stat.mean) + ' ± ' + f02(stat.se2) + suffix);
-		})
+
+			if (t !== 'cps') {
+				avLine.transition()
+							.ease('elastic')
+							.duration(500)
+							.attr({
+								y1: myScale[t].y(myStat.mean),
+								y2: myScale[t].y(myStat.mean)
+							});
+			}
+
+			if (t === 'cps') {
+				var xOffset = 0;
+				var myParents = d3.selectAll('.legend-item')[0];
+				d3.keys(stat).forEach(function(v, i) {
+					var myTarget = d3.select('.ave2se-' + v.replace(' ',''));
+					myTarget.on('click', function() {
+						var myStat = calcAverage('cps');
+						copyDataToClickBoard(myStat[v].mean * Math.pow(10, stat[v].order) + '\t' +
+																 myStat[v].se2 * Math.pow(10, stat[v].order));
+					});
+					var myOrder = ' [\u00D710<tspan baseline-shift="super" font-size="60%">' + stat[v].order + '</tspan>]';
+					myTarget.html(': ' + f04(myStat[v].mean) + ' ± ' + f04(myStat[v].se2) + myOrder);
+					var li = d3.select(myParents[i]);
+					li.attr({transform: 'translate(' + xOffset + ',0)'});
+					xOffset += li.node().getBBox().width + 20; // padding-right = 20
+					d3.select('.average-line-'+v.replace(' ','')).transition()
+								.ease('elastic')
+								.duration(500)
+								.attr({
+									y1: myScale[t].y(myStat[v].mean),
+									y2: myScale[t].y(myStat[v].mean)
+								});
+				});
+			} else {
+				var suffix = (t==='hydride') ? ' [\u00D710<tspan baseline-shift="super" font-size="60%">' + config.order.hydride + '</tspan>]' : ' [\u2030]';
+				avText.html('Average & 2SE: ' + f02(myStat.mean) + ' ± ' + f02(myStat.se2) + suffix);
+			}
+		});
 	};
 
+	// ===========================================================================
 	my.draw = function(target) {
 		svg = d3.select(target);
 		var width = frameWidth - (margin.left + margin.right),
@@ -171,11 +240,11 @@ module.exports = function () {
 			fill: '#ffffff',
 			stroke: 'none'
 		});
-		var container = svg.append('g').classed('chart-frame', true)
-			svg.attr({
-				width: width + margin.left + margin.right,
-				height: plottypes.length * height + margin.top + margin.bottom
-			});
+		var container = svg.append('g').classed('chart-frame', true);
+		svg.attr({
+			width: width + margin.left + margin.right,
+			height: plottypes.length * height + margin.top + margin.bottom
+		});
 		svg.append('g').classed('title', true)
 			.append('text')
 			.append('tspan').classed('title-text', true);
@@ -194,7 +263,7 @@ module.exports = function () {
 					y1: 0, y2: plottypes.length * height,
 					fill: 'none',
 					stroke: 'rgba(255,0,255,0.8)',
-					'stroke-width': .2
+					'stroke-width': 0.2
 				});
 
 			var maskedArea = container.append('g').classed('masked-area', true)
@@ -206,16 +275,18 @@ module.exports = function () {
 							});
 		}
 		var x = 0, y = 0;
+		var xAxis, yAxis;
+		var t;
 		for (var i in plottypes) {
-			var t = plottypes[i];
+			t = plottypes[i];
 			// Create scales
 			myScale[t] = {
 				x: d3.scale.linear().domain([0, data.cycleNumber + 1]).range([0, width]),
 				y: d3.scale.linear().domain(getRange(t)).range([height, 0])
-			}
-			myScale['x'] = myScale[t].x;
+			};
+			myScale.x = myScale[t].x;
 			// Create plot frame
-			x = margin.left, y = (margin.top/1 + i * height/1);
+			x = margin.left; y = (margin.top/1 + i * height/1);
 			myPlot[t] = container.append('g').classed('plot ' + t, true)
 					.attr({
 						transform: "translate(" + x + "," + y + ")",
@@ -224,8 +295,8 @@ module.exports = function () {
 					});
 			var lastFlag = (parseInt(i) === (parseInt(plottypes.length) - 1)) ? true : false;
 			// Create Axis bases
-			var xAxis = makeAxis(myPlot[t], 'x', t, height, lastFlag),
-				yAxis = makeAxis(myPlot[t], 'y', t, width);
+			xAxis = makeAxis(myPlot[t], 'x', t, height, lastFlag);
+			yAxis = makeAxis(myPlot[t], 'y', t, width);
 			// Axis title
 			yAxis.append("text")
 				.attr({
@@ -252,9 +323,16 @@ module.exports = function () {
 
 			drawConnLine(line, t);
 			drawPoints(point, t, circleSize);
-			if (t === 'cps') addCPSLegend();
 		}
-
+		if (!printFlag) {
+			var mouseReceiver = container.append('g').classed('mouse-receiver', true).append('rect').attr({
+				transform: 'translate(' + margin.left + ',' + margin.top + ')',
+				width: width,
+				height: plottypes.length * height,
+				fill: 'rgba(255,255,255,0)'
+			});
+		}
+		if (plottypes.indexOf('cps') > -1) addCPSLegend();
 		my.updateTitle();
 		my.updateAverage();
 
@@ -266,21 +344,22 @@ module.exports = function () {
 			'font-size': '14px',
 		});
 
+		/*
+		 * Actions
+		 * - actions don't need for printing
+		 */
 		if (!printFlag) {
-			var mouseReceiver = container.append('g').classed('mouse-receiver', true).append('rect').attr({
-				transform: 'translate(' + margin.left + ',' + margin.top + ')',
-				width: width,
-				height: plottypes.length * height,
-				fill: 'rgba(255,255,255,0)'
+			d3.select('.background').on('dblclick', function() {
+				resetMasking(svg, myPlot);
 			});
 
-			/*
-			 * Actions
-			 *
-			 */
+			d3.select('.resetMaskBtn').on('click', function() {
+				resetMasking(svg, myPlot);
+				d3.select(this).classed('hide', true);
+			});
 
 			var startPointX = -1,
-				startPoint = 0;
+					startPoint = 0;
 			mouseReceiver.on('mouseenter', function() {
 				vline.classed('hide', false);
 				svg.select('.current-values').classed('hide', false);
@@ -302,20 +381,14 @@ module.exports = function () {
 				}
 
 				var m = d3.mouse(this);
-				var x = myScale[t].x(d3.round(myScale[t].x.invert(m[0])))
+				var x = myScale[t].x(d3.round(myScale[t].x.invert(m[0])));
 				vline.attr({x1: x, x2: x});
 				updateCurrentValue(parseInt(myScale[t].x.invert(x), 10));
 			});
 
 			mouseReceiver.on('dblclick', function() {
 				if (isHover(this)) return;
-				maskedData = [];
-				svg.selectAll('.masked').classed('masked', false);
-				plottypes.map(function(t) {
-					myPlot[t].selectAll('.connLines').remove();
-					drawConnLine(myPlot[t], t);
-				});
-				my.updateAverage();
+				resetMasking(svg, myPlot);
 			});
 
 			// data masking
@@ -345,7 +418,7 @@ module.exports = function () {
 				var currentX = getCurrentX(this);
 				currentX = (currentX < 1) ? 1 : currentX;
 				var current = myScale.x(currentX);
-				var maskRange = [startPointX, currentX].sort(function(a,b){ return a-b });
+				var maskRange = [startPointX, currentX].sort(function(a,b){ return a-b; });
 				if (!isHover(this)) {
 					currentX = (data.cycleNumber < currentX) ? data.cycleNumber : 1;
 				}
@@ -354,14 +427,18 @@ module.exports = function () {
 				vline.attr({x1: current, x2: current })
 									.classed('hide', false);
 				startPointX = -1;
+				d3.select('.resetMaskBtn').classed('hide', !maskedData.length);
 			};
+
 			var drag = d3.behavior.drag()
 						.on('dragstart', dragstarted)
 						.on('drag', dragged)
 						.on('dragend', dragended);
 
 			mouseReceiver.call(drag);
-		}
+		} // END - actions
+
+		// Apply Masking status for each points
 		if (maskedData.length) {
 			var p = svg.selectAll('.point');
 			maskedData.forEach(function(cycle) {
@@ -371,9 +448,30 @@ module.exports = function () {
 				});
 			});
 		}
+	}; // END - my.draw
+
+
+
+
+
+	// private functions
+	var copyDataToClickBoard = function(data) {
+		var clipboard = require('clipboard')
+		clipboard.writeText(data);
 	};
 
-	// private
+	var resetMasking = function(svg, myPlot) {
+		if (maskedData.length === 0) return;
+		maskedData = [];
+		svg.selectAll('.masked').classed('masked', false);
+		plottypes.map(function(t) {
+			myPlot[t].selectAll('.connLines').remove();
+			drawConnLine(myPlot[t], t);
+		});
+		my.updateAverage();
+		d3.select('.resetMaskBtn').classed('hide', true);
+	};
+
 	var makePlotData = function() {
 		var out = [],
 			myKeys = Object.keys(data.cps);
@@ -388,53 +486,53 @@ module.exports = function () {
 			hydrideRatio.push(nume[i] / deno[i]);
 		}
 		var hydrideOrder = Math.ceil(Math.log(d3.mean(hydrideRatio)) / Math.LN10) - 1;
-		config['order'] = {hydride: hydrideOrder};
+		config.order = {hydride: hydrideOrder};
 
-		nume = data.cps[config.deltaRatio[0]],
+		nume = data.cps[config.deltaRatio[0]];
 		deno = data.cps[config.deltaRatio[1]];
 		for (i=0; i<l; i++) { // cycle loop
 		cycleData = {cycle: (i + 1)}; // init + add cycle key
-		cycleData['cps'] = {};
+		cycleData.cps = {};
 		for (var k in myKeys) { // isotope loop for cps
 			var key = myKeys[k];
-			cycleData['cps'][key] = data.cps[key][i] / Math.pow(10, data.stat[key].order);
+			cycleData.cps[key] = data.cps[key][i] / Math.pow(10, data.stat[key].order);
 		}
-		cycleData['delta'] = (nume[i] / deno[i] / config.deltaScale - 1) * 1000;
-		cycleData['hydride'] = hydrideRatio[i] / Math.pow(10, hydrideOrder);
+		cycleData.delta = (nume[i] / deno[i] / config.deltaScale - 1) * 1000;
+		cycleData.hydride = hydrideRatio[i] / Math.pow(10, hydrideOrder);
 		out.push(cycleData);
 		}
 		return out;
 	};
 	var makeAxis = function(obj, pos, t, maxsize, lastFlag) {
-		// var maxsize = pos === 'x' ? height : width;
-		if (pos === 'x') {
-			var orient = 'bottom',
+		var attr = {'class': 'y axis'},
+				orient = 'left',
 				tickSize = 6,
-				ticks = 4,
-				scale = myScale.x,
-				attr = {
-					'class': 'x axis',
-					transform: "translate(0," + maxsize + ")"
-				};
-				var Axis = d3.svg.axis()
+				ticks = 5,
+				scale = myScale[t].y,
+				Axis;
+
+		if (pos === 'x') {
+			orient = 'bottom';
+			tickSize = 6;
+			ticks = 4;
+			scale = myScale.x;
+			attr = {
+				'class': 'x axis',
+				transform: "translate(0," + maxsize + ")"
+			};
+				Axis = d3.svg.axis()
 					.scale(scale)
 					.ticks(ticks)
 					.orient('bottom')
 					.tickSize(tickSize, 0)
 					.tickFormat('');
-				obj.append('g').attr({class: 'x2 axis',transform: 'translate(0,0)'}).call(Axis);
-		} else {
-			var attr = {'class': 'y axis'},
-				orient = 'left',
-				tickSize = 6,
-				ticks = 5,
-				scale = myScale[t].y;
+			obj.append('g').attr({class: 'x2 axis',transform: 'translate(0,0)'}).call(Axis);
 		}
-		var Axis = d3.svg.axis()
-					.scale(scale)
-					.ticks(ticks)
-					.orient(orient)
-					.tickSize(-tickSize, -maxsize);
+		Axis = d3.svg.axis()
+			.scale(scale)
+			.ticks(ticks)
+			.orient(orient)
+			.tickSize(-tickSize, -maxsize);
 		if (pos === 'x' && lastFlag===false) Axis.tickFormat('');
 		return obj.append('g').attr(attr).call(Axis);
 	};
@@ -453,7 +551,7 @@ module.exports = function () {
 					stroke: t==='cps' ? config.color[t][v] : config.color[t],
 					'stroke-width': 1, fill: 'none'
 				});
-		})
+		});
 	};
 
 	var drawPoints = function(obj, t, size) {
@@ -471,17 +569,53 @@ module.exports = function () {
 
 	var calcAverage = function(t) {
 		var i = 0,
-			v = [];
-		filterMaskedData().forEach(function(o, i) {
-			v.push(o[t]);
-		});
-		return {
-			mean:   d3.mean(v),
-			stdev2: d3.deviation(v) * 2,
-			se2:  (d3.deviation(v) * 2) / Math.sqrt(v.length),
-			min:  d3.min(v),
-			max:  d3.max(v)
-		};
+				v = [],
+				alpha = [],
+				cps = {},
+				out = {},
+				key;
+
+		if (t === 'cps') {
+			var myMaskedData = filterMaskedData();
+			for(key in myMaskedData[0].cps) { cps[key] = []; }
+			myMaskedData.forEach(function(o, i) {
+				for(var key in o.cps) {
+					cps[key].push(o.cps[key]);
+				}
+			});
+			for(key in cps) {
+				out[key] = {
+					mean:   d3.mean(cps[key]),
+					stdev2: 2 * d3.deviation(cps[key]),
+					se2:  2 * d3.deviation(cps[key]) / Math.sqrt(cps[key].length),
+					min:  d3.min(cps[key]),
+					max:  d3.max(cps[key])
+				};
+			}
+			return out;
+		} else {
+			filterMaskedData().forEach(function(o, i) {
+				v.push(o[t]);
+				alpha.push(o[t]/1000 + 1);
+			});
+		}
+		if (t === 'delta') {
+			return {
+				mean:   d3.mean(v),
+				stdev2: 2 * 1000 * d3.deviation(alpha) / d3.mean(alpha),
+				se2:  2 * 1000 * (d3.deviation(alpha) / Math.sqrt(alpha.length)) / d3.mean(alpha),
+				min:  d3.min(v),
+				max:  d3.max(v)
+			};
+		} else {
+			return {
+				mean:   d3.mean(v),
+				stdev2: d3.deviation(v) * 2,
+				se2:  (d3.deviation(v) * 2) / Math.sqrt(v.length),
+				min:  d3.min(v),
+				max:  d3.max(v)
+			};
+		}
 	};
 
 	var maskData = function(obj, range, plotObj) {
@@ -506,7 +640,7 @@ module.exports = function () {
 		}
 		if (maskedData.length === data.cycleNumber) {
 			alert('You can\'t mask all cycles!');
-			for (var i=range[0]; i<=range[1]; i++) {
+			for (i=range[0]; i<=range[1]; i++) {
 				ind = maskedData.indexOf(i);
 				if (ind === -1) {
 					maskedData.push(i);
@@ -555,7 +689,7 @@ module.exports = function () {
 				});
 			} else {
 				label = config.labels[v];
-				suffix = (v === 'hydride') ? ' [\u00D7E' + config.order['hydride'] + ']' : ' [\u2030]';
+				suffix = (v === 'hydride') ? ' [\u00D710<tspan baseline-shift="super" font-size="60%">' + config.order.hydride + '</tspan>]' : ' [\u2030]';
 				txt = label + ': ' + f03(data.plotData[cycle - 1][v]) + suffix;
 				t = cv.append('text').html(txt).attr({
 					x: xOffset,
@@ -567,17 +701,21 @@ module.exports = function () {
 	};
 
 	var addCPSLegend = function() {
-		var obj = myPlot['cps']
-		if (!obj.select('.legend').empty()) return;
+		var obj = myPlot.cps;
+		var parentPos = obj.attr('transform').match(/([\.\-\d]+)/ig);
+		if (!d3.select('.legend').empty()) return;
 		var keys = d3.keys(stat);
 		var legendXPos = data.cycleNumber>40 ? parseInt(data.cycleNumber/20) : 1;
-		var legend = obj.append('g').classed('legend', true).attr({
-			transform: 'translate('+ myScale.cps.x(legendXPos) + ',' + 20 + ')'
+		var legend = d3.select('.chart-frame').append('g').classed('legend', true).attr({
+			transform: 'translate('+ (parentPos[0]/1 + myScale.cps.x(legendXPos)) + ',' + (parentPos[1]/1 + 20) + ')'
 		});
 		var color = config.color.cps;
 		var li = '';
 		var r = circleSize;
 		var xOffset = 0;
+		var myOrder = '';
+		var average2se = '';
+		var myAttrForText;
 		keys.forEach(function(v, i) {
 			li = legend.append('g').classed('legend-item', true);
 			li.append('circle').attr({
@@ -586,17 +724,23 @@ module.exports = function () {
 				r: r,
 				cx: 0, cy: -(6 - r/2)
 			});
-			var myOrder = ' [\u00D7E+' + stat[v].order + ']';
-			li.append('text').html(formatLabels(v) + myOrder).attr({
+			// myOrder = ' [\u00D7E+' + stat[v].order + ']';
+			myAttrForText = {
 				x: r + 4,
 				y: 0,
 				fill: color[v],
 				stroke: 'none',
-			}).style({
-				'font-size': '12px',
-				'text-anchor': 'start'
-			});
-			li.attr({transform: 'translate(' + xOffset +','+ 0 + ')'});
+			};
+			var myLegText = li.append('text')
+				.attr(myAttrForText)
+				.style({
+					'font-size': '12px',
+					'text-anchor': 'start'
+				});
+			myLegText.append('tspan').html(formatLabels(v));
+			myLegText.append('tspan').classed('average-text ave2se-'+v.replace(' ',''), true);
+			// myLegText.append('tspan').text(myOrder);
+			li.attr({transform: 'translate(' + xOffset +', 0)'});
 			xOffset += li.node().getBBox().width + 20; // padding-right = 20
 		});
 	};
@@ -616,7 +760,7 @@ module.exports = function () {
 
 	var filterMaskedData = function() {
 		return data.plotData.filter(function(v, i) {
-			return maskedData.indexOf(i + 1) < 0
+			return maskedData.indexOf(i + 1) < 0;
 		});
 	};
 
@@ -631,7 +775,8 @@ module.exports = function () {
 					cps: {
 						'16O':    'red',
 						'18O':    'green',
-						'16O 1H': '#00A7EA'
+						'16O 1H': '#00A7EA',
+						'16O1H': '#00A7EA'
 					},
 					hydride: '#24557F',
 					delta: 'magenta'
@@ -655,7 +800,8 @@ module.exports = function () {
 					cps: {
 						'12C':    'red',
 						'13C':    'green',
-						'13C 1H': '#00A7EA'
+						'13C 1H': '#00A7EA',
+						'13C1H': '#00A7EA'
 					},
 					hydride: '#24557F',
 				delta: 'magenta'
@@ -696,13 +842,13 @@ module.exports = function () {
 			myKeys = [],
 			i = 0,
 			vMargin = averages.length ? 0.5 : 0;
-		var plotYMargin = plotYMargin || 20;
+		plotYMargin = plotYMargin || 20;
 
 		if (dataType === 'cps') {
 			myKeys = d3.keys(data.plotData[0].cps);
 			for (i=0; i<data.plotData.length; i++) {
 				myKeys.forEach(function(v) {
-					values.push(data.plotData[i]['cps'][v]);
+					values.push(data.plotData[i].cps[v]);
 				});
 			}
 		} else {
@@ -719,6 +865,7 @@ module.exports = function () {
 	var f03 = d3.format('0.3f');
 	var f04 = d3.format('0.4f');
 	var f05 = d3.format('0.5f');
+	var f06 = d3.format('0.6f');
 
 
 

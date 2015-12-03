@@ -18,9 +18,13 @@ svg {
 	fill-opacity: 0.1;
 }
 .current-values {
-	-webkit-user-select: none; 
+	-webkit-user-select: none;
 }
 
 .mouse-receiver {
 	cursor: crosshair;
+}
+
+.average-text:hover {
+	cursor: pointer;
 }

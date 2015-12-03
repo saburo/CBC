@@ -53,20 +53,38 @@ body {
 		background:url(../img/logo2.png);
 		cursor: pointer;
 	}
-
-	.flags {
+	.flagbox {
 		position: absolute;
+		width: calc(100% - 310px);
 		height: 50px;
-		width: 0;
-		top: -3px;
-		left: 68px;
+		left: 46px;
+		overflow: hidden;
+	}
+	.flags {
+		position: relative;
+		height: 50px;
+		width: calc(100% - 43px - 15px);
+		top: -2px;
+		left: calc(-1 * (100% - 20px));
 		background-image:url(../img/flags.png);
 		background-repeat: repeat-x;
 	}
 
 	.flags.on {
-		width: calc(100% - 338px);
+		left: 15px;
 	}
+
+	.monkey {
+		position: absolute;
+		width: 43px;
+		height: 50px;
+		right: -43px;
+		background-image: url(../img/monkey.png);
+	}
+
+	.on .monkey {
+	}
+
 
 .main {
 	position: relative;
@@ -213,16 +231,16 @@ body {
 .asc-file:hover {
 	border-bottom: 1px solid #f2f2f2;
 	border-top: 1px solid #f2f2f2;
+	border-bottom: 1px solid #b5cce3;
+	border-top: 1px solid #b5cce3;
 	margin: -1px 0 0 0;
-/*	margin-bottom: 0px;
-	margin-top: -1px;
-	margin-left: 0;
-	margin-right: 0; */
 	padding-left: 10px;
 	padding-right: 5px;
 	background: #f9f9f9;
-	background: #fff;
+	background: #e5f2ff;
+	background: #b5cce3;
 	color: #337AB7;
+	color: #2f71a9;
 	cursor: pointer;
 	box-shadow: 0 6px 10px -7px black;
 	z-index: 30;
@@ -249,6 +267,7 @@ body {
 }
 .asc-file:hover > .asc-file-name {
 	color: #aaa;
+	color: #fff;
 }
 .asc-file.current > .asc-file-name {
 	color: #aaa;
@@ -278,6 +297,15 @@ body {
 	padding: 0;
 	background: #fefefa;
 	background: #fff;
+}
+
+.resetMaskBtn {
+	position: absolute;
+	top: 8px;
+	right: 270px;
+	height: 18px;
+	font-size: 8px;
+	line-height: 13px;
 }
 /*.modal.fade.nofly {
     top: 10%;

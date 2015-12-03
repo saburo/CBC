@@ -9,7 +9,7 @@ var fs = require('fs');
 var defaultWindowSize = {
     width: 980,
     height: 680
-}
+};
 
 
 
@@ -68,7 +68,7 @@ app.on('ready', function() {
         plotterWindow.webContents.send('window-resized', plotterWindow.getContentSize());
     });
 
-   plotterWindow.setProgressBar(0.5);
+  //  plotterWindow.setProgressBar(0.5);
 
 });
 
@@ -83,7 +83,7 @@ var savePDFEvent;
 
 ipc.on('saveAsPDF', function(e, arg) {
     // create invisible window for printing
-    savePDFEvent = e,
+    savePDFEvent = e;
     printPDF_args = arg;
     printWin = new BrowserWindow({
         width: 100,
@@ -94,7 +94,7 @@ ipc.on('saveAsPDF', function(e, arg) {
         printWin = null;
     });
     printWin.loadUrl('file://' + __dirname + '/../renderer/printer/print.html');
-    printWin.openDevTools();
+    // printWin.openDevTools();
 });
 
 ipc.on('current-rendering', function(e, arg) {
@@ -111,13 +111,13 @@ ipc.on('rendering-done', function(e, arg) {
     }, function(err, data) {
         global.saveProgress = 99;
         fs.writeFile(printPDF_args.destPath, data, function(err) {
-            if(err) alert('genearte pdf error', err)
+            if(err) alert('genearte pdf error', err);
             savePDFEvent.sender.send('async-reply-print-done', true);
-            // printWin.close();
+            printWin.close();
         });
     });
 });
 
 ipc.on('getContentSize', function(event) {
     event.returnValue = plotterWindow.getContentSize();
-})
+});

@@ -12,8 +12,12 @@
 
   <!-- Tool bar -->
   <div id="toolbar" class="toolbar">
-    <div id="flags" class="flags"></div>
-    <div class="pull-left wiscsims" id="wiscsims" title="Show Flags!" style=""></div>
+    <div class="flagbox">
+      <div id="flags" class="flags">
+        <div class="monkey"></div>
+      </div>
+    </div>
+    <div class="pull-left wiscsims" id="wiscsims" title="Flags!" style=""></div>
 
     <div class="pull-right toolbar-btn preference-btn" style="" id="preference" title="Preferences">
       <span style="font-size: 26px; color: white;" class="glyphicon glyphicon-cog"></span>
@@ -31,7 +35,10 @@
 
   <!-- main -->
   <div id="main" class="main">
-    <div id="graph" class="graph-area"><svg id="myPlot"></svg></div>
+    <div id="graph" class="graph-area">
+      <button type="button" name="resetMaskBtn" class="btn btn-xs btn-warning resetMaskBtn hide">RESET MASK</button>
+      <svg id="myPlot"></svg>
+    </div>
     <div id="list" class="list-area">
       <div class="aux">
         <div class="select-dir-btn">
@@ -93,7 +100,7 @@
                   <input type="radio" name="fileformat" id="fileformatPNG" value="png"> PNG
                 </label>
                 <label class="radio-inline format">
-                  <input type="radio" name="fileformat" id="fileformatJPG" value="jpeg"> JPEG
+                  <input type="radio" name="fileformat" id="fileformatJPG" value="jpg"> JPEG
                 </label>
               </div>
             </div>
@@ -197,6 +204,9 @@
             <div class="form-group">
               <label for="" class="control-label col-sm-5">Averages:</label>
               <div class="col-sm-7 averages">
+                <div class="checkbox">
+                  <label> <input type="checkbox" value="cps" > cps </label>
+                </div>
                 <div class="checkbox">
                   <label> <input type="checkbox" value="hydride" > hydride ratio </label>
                 </div>

@@ -26,7 +26,7 @@ var ps = require('../common/asc_parser'),
 
 var defWinSize = remote.getGlobal('defaultWindowSize');
 var myPath = '',
-    myExcelFile = undefined,
+    myExcelFile,
     configPath = path.join(app.getPath('userData'), 'preferences.json'),
     searchBase = [],
     configStates = {},
@@ -54,9 +54,9 @@ ipc.on('move-prev', function() {
 
 
 /**** Functions ****/
-RegExp.escape = function( value ) {
-     return value.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, "\\$&");
-};
+// RegExp.escape = function( value ) {
+//      return value.replace(/[\-\[\]{}()*+?.,\\\^$|#\s]/g, "\\$&");
+// };
 
 var updateFileList = function(myDir, myExcel, cb) {
     $('#asc-list').html('<li class="asc-file">Loading...</li>');
@@ -76,7 +76,7 @@ var updateFileList = function(myDir, myExcel, cb) {
             content = [];
             if (excelComments.hasOwnProperty(ascList[i])) {
                 Comm = excelComments[ascList[i]];
-                CommOrigin = ''
+                CommOrigin = '';
             } else {
                 Comm = getComment(path.join(myDir, ascList[i]));
                 CommOrigin = $('<span/>').addClass('glyphicon glyphicon-text-background')
@@ -101,13 +101,13 @@ var updateFileList = function(myDir, myExcel, cb) {
         if (excelMultiFlag.length > 0) {
             var options = [];
             excelMultiFlag.forEach(function(v) {
-                options.push($('<option/>').attr('value', v).text(v))
+                options.push($('<option/>').attr('value', v).text(v));
             });
             var myModal = $('#selectExcelModal .main-modal-body');
             myModal.html('').append($('<select/>').attr('id', 'commentExcel').addClass('form-control').append(options));
             $('#selectExcelModal').modal({
                 show: true
-            })
+            });
         }
         if (cb !== undefined) cb();
     });
@@ -142,7 +142,7 @@ var getExcelCommentList = function(list, excelPath) {
     var parseExcelComments = function(sheetPath) {
         // path = path.join(myPath, mySpreadSheet[0]);
         var comments = {};
-        wb = XLS.readFile(sheetPath).Sheets['Sum_table'];
+        wb = XLS.readFile(sheetPath).Sheets.Sum_table;
         for (i=2; i<= wb['!range'].e.r; i++) {
             if (wb.hasOwnProperty('A'+i)) {
                 comments[wb['A'+i].v] = wb['B'+i].v;
@@ -188,7 +188,7 @@ var getComment = function(filename) {
 };
 
 var reloadFolderItems = function() {
-  var current = $('.current')
+  var current = $('.current');
   updateFileList(myPath, myExcelFile, function() {
     var list = $('.asc-file');
     for(var i=0; i<list.length; i++) {
@@ -224,7 +224,7 @@ var parseConfig = function() {
 var setConfig = function(param, item, value) {
     value = value || true;
     $('.'+param + ' input[value=' + item + ']').prop('checked', value);
-    if (param==='plottypes' && (item==='hydride' || item==='delta')) {
+    if (param==='plottypes' && (item==='hydride' || item==='delta' || item==='cps')) {
         $('.averages input[value=' + item + ']').prop('disabled', false);
     }
 };
@@ -233,7 +233,7 @@ var getConfigs = function() {
     // set default values;
     var out = {
             titles: ['comment'], plottypes: ['cps','delta'],
-            averages: ['delta'],
+            averages: ['cps','delta'],
         };
     try {
         out = JSON.parse(fs.readFileSync(configPath,'utf8'));
@@ -249,7 +249,7 @@ var loadConfig = function() {
     $('#configModal input').prop('checked', false);
     $('.averages input').prop('disabled', true);
     $.each(getConfigs(), function(key, v) {
-        v.map(function(i) { setConfig(key, i) });
+        v.map(function(i) { setConfig(key, i); });
     });
 };
 
@@ -270,6 +270,7 @@ var intersect = function(a, b) {
 var updatePlot = function(fileName, comm, mask) {
     var p = '';
     var config = getConfigs();
+    // config.averages.push('cps');
     pt.plottype(config.plottypes)
         .average(intersect(config.averages, config.plottypes))
         .title(config.titles)
@@ -289,7 +290,7 @@ var updateWindow = function(winSize) {
     pt.width(winSize[0] - $('#list').width());
     pt.height(winSize[1] - $('#toolbar').height());
     $('#graph, #main, #list').css('height', pt.height() +'px');
-    $('.asc-list').css('height', (pt.height() - $('.aux').height()) + 'px')
+    $('.asc-list').css('height', (pt.height() - $('.aux').height()) + 'px');
     if (pt.filename()) pt.draw('#myPlot');
 };
 
@@ -335,10 +336,24 @@ var completeProgressBar = function(waitTime) {
     }, waitTime);
 };
 
+var sanitizeFileName = function(text, chr) {
+  chr = chr || '_';
+  return text.replace(/[\/\:\s\t\;]/ig, chr);
+};
+
 var saveAsPDF = function () {
-    dialog.showSaveDialog(function(destPath) {
-        if (destPath == undefined) return false;
-        initProgressBar()
+    var crt = $('.current');
+    var fname = $('.pages > input:checked').val() === 'all' ?
+                path.basename(myPath) :
+                crt.attr('data-asc').replace(/(^\d+|\.asc)/ig,'') + '_' + sanitizeFileName(crt.attr('data-comment'));
+    var saveOpts = {
+      defaultPath: path.join(myPath, fname + '.pdf')
+    };
+    dialog.showSaveDialog(saveOpts, function(destPath) {
+        // Do nothing when hit cancel button
+        if (destPath === undefined) return false;
+
+        initProgressBar();
         var files = [];
         destPath = (destPath.match(/\.pdf$/)) ? destPath : destPath + '.pdf';
         var mask = [];
@@ -362,7 +377,7 @@ var saveAsPDF = function () {
                 comment: $('.current') .attr('data-comment'),
             });
             if ($('#datamasking').prop('checked')) {
-                mask = pt.maskedData;
+                mask = pt.maskedData();
             }
         }
         var plotConfig = getConfigs();
@@ -388,10 +403,8 @@ var saveAsPDF = function () {
 
 var saveAsSVG = function(imgFlag) {
     if ($('.current').length) {
-        initProgressBar();
         var d3 = require('d3');
         var html = d3.select(d3.select("svg").node().parentNode.cloneNode(true));
-
 
         // paper setting
         // paperSize: $('#paperSize > option:selected').val(),
@@ -404,44 +417,54 @@ var saveAsSVG = function(imgFlag) {
             'x': '0px',
             'y': '0px',
             'id': 'Layer_1',
-            'viewBox': "0 0 " + pt.width + ' ' + pt.height,
-            'enable-background': "new 0 0 " + pt.width + ' ' + pt.height,
+            'viewBox': "0 0 " + pt.width() + ' ' + pt.height(),
+            'enable-background': "new 0 0 " + pt.width() + ' ' + pt.height(),
             "xml:space": 'preserve'
         });
-        var css = '<style type="text/css"><![CDATA['
-                + 'svg {font-family: Helvetica, sans-serif;}'
-                + '.axis text {font: 12px sans-serif;}'
-                + '.axis path, .axis line {fill: none; stroke: #000; stroke-width: 1.2; shape-rendering: crispEdges;}'
-                + '.masked {opacity: 0.1;}'
-                + ']]></style>';
+        var css = '<style type="text/css"><![CDATA[' +
+                  'svg {font-family: Helvetica, sans-serif;}' +
+                  '.axis text {font: 12px sans-serif;}' +
+                  '.axis path, .axis line {fill: none; stroke: #000; stroke-width: 1.2; shape-rendering: crispEdges;}' +
+                  '.masked {opacity: 0.1;}' +
+                  ']]></style>';
         html.select('svg').insert('defs', ':first-child');
         html.select('defs').html(css);
-        var headers = '<?xml version="1.0" encoding="utf-8"?>'
-                    + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" '
-                    + '"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">';
-
-        html.select('.current-values').remove();
-        html.select('.vline').remove();
-        html.select('.masked-area').remove();
-        html.select('.mouse-receiver').remove();
+        var headers = '<?xml version="1.0" encoding="utf-8"?>' +
+                      '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" ' +
+                      '"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">';
+        var removedElements = [
+          '.current-values',
+          '.vline',
+          '.masked-area',
+          '.mouse-receiver',
+          '.resetMaskBtn'
+        ];
+        removedElements.map(function(v) {
+          html.selectAll(v).remove();
+        });
 
         var svgText = headers + html.node().innerHTML;
+        var expFileName = $('.current').attr('data-asc').replace(/(^\d+|\.asc)/ig, '') + '_' +
+                            sanitizeFileName($('.current').attr('data-comment'));
+        var saveOpts = {
+          defaultPath: path.join(myPath, expFileName + '.' + imgFlag)
+        };
 
-        dialog.showSaveDialog(function(destPath) {
-            if (destPath == undefined) return false;
-            if(imgFlag) {
-                if (imgFlag === 'png') {
-                    destPath += destPath.match(/\.png$/) ? '' : '.png';
-                } else {
-                    destPath += destPath.match(/\.jpe?g$/) ? '' : '.jpg';
-                }
-                svg_to_img(html[0][0], pt, destPath, imgFlag);
+        dialog.showSaveDialog(saveOpts, function(destPath) {
+            // for hiting cancel button
+            if (destPath === undefined) return false;
+
+            initProgressBar();
+            if(imgFlag === 'svg') {
+              destPath += destPath.match(/\.svg$/i) ? '' : '.svg';
+              fs.writeFile(destPath, svgText, function(err) {
+                  if (err) { dialog.showErrorBox("ERROR", "SVG file has not been saved"); }
+                  completeProgressBar();
+              });
             } else {
-                destPath += destPath.match(/\.svg$/) ? '' : '.svg';
-                fs.writeFile(destPath, svgText, function(err) {
-                    if (err) { dialog.showErrorBox("ERROR", "SVG file has not been saved"); }
-                    completeProgressBar();
-                });
+              var pattern = new RegExp('\\.' + imgFlag + '$', 'i');
+              destPath += destPath.match(pattern) ? '' : '.' + imgFlag;
+              svg_to_img(html[0][0], pt, destPath, imgFlag);
             }
         });
         html.remove();
@@ -452,10 +475,11 @@ var saveAsSVG = function(imgFlag) {
 
 function svg_to_img(html, pt, destPath, format) {
     var svg = html.querySelector("svg");
+    var svgData;
     if (typeof window.XMLSerializer != "undefined") {
-        var svgData = (new XMLSerializer()).serializeToString(svg);
+        svgData = (new XMLSerializer()).serializeToString(svg);
     } else if (typeof svg.xml != "undefined") {
-        var svgData = svg.xml;
+        svgData = svg.xml;
     }
 
     var canvas = document.createElement("canvas");
@@ -464,11 +488,11 @@ function svg_to_img(html, pt, destPath, format) {
     canvas.height = pt.height();
     var ctx = canvas.getContext("2d");
     var img = document.createElement("img");
-    img.setAttribute("src", "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData))) );
+    img.setAttribute("src", "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData))));
 
     img.onload = function() {
         ctx.drawImage(img, 0, 0);
-        var imgsrc = canvas.toDataURL("image/" + format, 1.0);
+        var imgsrc = canvas.toDataURL("image/" + format.replace('jpg', 'jpeg'), 1.0);
         var b64img = imgsrc.split(',')[1];
         img.remove();
         fs.writeFile(destPath, base64.decode(b64img), function(err) {
@@ -476,7 +500,7 @@ function svg_to_img(html, pt, destPath, format) {
             completeProgressBar();
         });
     };
-};
+}
 
 
 var timerId = '';
@@ -497,11 +521,11 @@ var resetSearchBox = function() {
     $('.remove-icon').fadeOut(200);
     $('#search-word').val('');
     $('.asc-file').removeClass('hide');
-    $('.hit-numbers').slideUp(200).html('').hide()
+    $('.hit-numbers').slideUp(200).html('').hide();
 };
 
 var adjustItemPosition = function(item) {
-    var al = $('#asc-list')
+    var al = $('#asc-list');
     al.scrollTop(al.scrollTop() + item.position().top - al.height()/2);
 };
 
@@ -540,15 +564,17 @@ var initConfigInputs = function() {
     $('.plottypes, .titles').sortable({
         update: function(e, ui) {previewPlot();}
     }).disableSelection();
-    $('#configModal input').on('change', function() {
+    $('#configModal .plottypes input').on('change', function() {
         var me = $(this);
-        if ($.inArray(me.val(), ['hydride', 'delta'])>-1) {
+        if ($.inArray(me.val(), ['cps', 'hydride', 'delta'])>-1) {
             var bool = me.prop('checked') ? false : true;
             $('.averages input[value='+me.val()+']').prop('disabled', bool);
         }
-        previewPlot();
     });
-}
+    $('#configModal input').on('change', function() {
+      previewPlot();
+    });
+};
 
 
 /**** Event Listeners ****/
@@ -569,7 +595,7 @@ $('.select-dir-btn').on('click', function() {
         myExcelFile = undefined;
         resetSearchBox();
         updateFileList(myPath, myExcelFile);
-        $('#folderName').text(path.basename(myPath))
+        $('#folderName').text(path.basename(myPath));
         $(this).attr('title', myPath);
         $('svg').html('');
     }
@@ -590,7 +616,7 @@ $('#search-word').on('keyup', function() {
         if (v.match(kw)) $(lis[i]).removeClass('hide');
     });
     if ($(this).val().length) {
-        var hits = (lis.length - $('.asc-file.hide').length)
+        var hits = (lis.length - $('.asc-file.hide').length);
         $('.remove-icon').fadeIn(100);
         $('.hit-numbers').slideDown(100)
                          .html( hits + '<span style="color: #ccc;"> / ' + lis.length + '</span>');
@@ -651,15 +677,11 @@ $('#cancel-config-btn').on('click', function() {
 
 // export config
 $('#print-btn').on('click', function() {
-    var fmt = $('.format > input:checked').val()
+    var fmt = $('.format > input:checked').val();
     if (fmt === 'pdf') {
         saveAsPDF();
-    } else if (fmt === 'svg'){
-        saveAsSVG();
-    } else if (fmt === 'png') {
-        saveAsSVG('png');
-    } else if (fmt === 'jpeg') {
-        saveAsSVG('jpeg');
+    } else {
+        saveAsSVG(fmt);
     }
     $(this).blur();
 });
@@ -669,13 +691,17 @@ $('#fileformatSVG, #fileformatPNG, #fileformatJPG').on('click', function() {
     $('#pageAll').prop('disabled', true);
     $('.paper-orientation > input').prop('disabled',true);
     $('.paper-size').prop('disabled',true);
+    $('#datamasking').prop('disabled', false);
 });
 
 $('#fileformatPDF').on('click', function() {
-    $('#pageAll').prop('checked', true);
+    // $('#pageAll').prop('checked', true);
     $('#pageAll').prop('disabled', false);
     $('.paper-orientation > input').prop('disabled', false);
     $('.paper-size').prop('disabled', false);
+    if ($("#pageAll").prop('checked')) {
+      $('#datamasking').prop('disabled', true);
+    }
 });
 
 $('#pageCurrent').on('click', function() {
@@ -703,13 +729,14 @@ $('#configModal').draggable({
 });
 // myPath = '/Users/saburo/Desktop/R/TEST_SIMS_DATA/20140624_d18O_garnet_stds_Kouki';
 // myPath = '/Users/saburo/Desktop/Data/data_asc_only';
-var tmp = getDataDir();
+var tmp = '/Users/saburo/Desktop/Data/data_asc_only';
+// var tmp = getDataDir();
 if (tmp) {
     myPath = tmp;
     resetSearchBox();
     updateFileList(myPath, myExcelFile);
-    $('#folderName').text(path.basename(myPath))
-    $(this).attr('title', myPath);
+    $('#folderName').text(path.basename(myPath));
+    // $(this).attr('title', myPath);
     $('svg').html('');
 }
 initConfigInputs();

@@ -724,7 +724,7 @@ $('.refresh-icon').on('click', function(event) {
 /**** Main routine (init) ****/
 
 $('.remove-icon, .hit-numbers').hide();
-$('#configModal').draggable({
+$('#configModal, #exportModal').draggable({
     handle: ".modal-header"
 });
 // myPath = '/Users/saburo/Desktop/R/TEST_SIMS_DATA/20140624_d18O_garnet_stds_Kouki';

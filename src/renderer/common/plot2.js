@@ -232,6 +232,7 @@ module.exports = function () {
 	// ===========================================================================
 	my.draw = function(target) {
 		svg = d3.select(target);
+		var mouseReceiver;
 		var width = frameWidth - (margin.left + margin.right),
 			height = (frameHeight - (margin.top + margin.bottom)) / plottypes.length; // divide by number of plots
 		svg.html('').append('g').append('rect').classed('background', true).attr({
@@ -325,7 +326,7 @@ module.exports = function () {
 			drawPoints(point, t, circleSize);
 		}
 		if (!printFlag) {
-			var mouseReceiver = container.append('g').classed('mouse-receiver', true).append('rect').attr({
+			mouseReceiver = container.append('g').classed('mouse-receiver', true).append('rect').attr({
 				transform: 'translate(' + margin.left + ',' + margin.top + ')',
 				width: width,
 				height: plottypes.length * height,
@@ -350,11 +351,11 @@ module.exports = function () {
 		 */
 		if (!printFlag) {
 			d3.select('.background').on('dblclick', function() {
-				resetMasking(svg, myPlot);
+				resetMasking();
 			});
 
 			d3.select('.resetMaskBtn').on('click', function() {
-				resetMasking(svg, myPlot);
+				resetMasking();
 				d3.select(this).classed('hide', true);
 			});
 
@@ -388,7 +389,7 @@ module.exports = function () {
 
 			mouseReceiver.on('dblclick', function() {
 				if (isHover(this)) return;
-				resetMasking(svg, myPlot);
+				resetMasking();
 			});
 
 			// data masking
@@ -416,7 +417,7 @@ module.exports = function () {
 			var dragended = function() {
 				if (startPointX < 0) return;
 				var currentX = getCurrentX(this);
-				currentX = (currentX < 1) ? 1 : currentX;
+				currentX = (currentX < 1) ? 1 : ((currentX > data.cycleNumber) ? data.cycleNumber : currentX);
 				var current = myScale.x(currentX);
 				var maskRange = [startPointX, currentX].sort(function(a,b){ return a-b; });
 				if (!isHover(this)) {
@@ -456,11 +457,24 @@ module.exports = function () {
 
 	// private functions
 	var copyDataToClickBoard = function(data) {
-		var clipboard = require('clipboard')
+		var clipboard = require('clipboard');
 		clipboard.writeText(data);
+		var myAlert = d3.select('.clipboard-alert');
+		if (myAlert.empty()) {
+			myAlert = d3.select('#graph').append('div').attr({
+				role: 'alert'
+			}).style({opacity: 0})
+			.classed('alert alert-danger clipboard-alert', true)
+			.html('<strong>Yay!</strong> Average and 2SE have been copied to clipboard.');
+		}
+		myAlert.transition().delay(100)
+			.style({opacity: 1, visibility: 'visible'})
+			.transition().delay(1800).duration(1200)
+			.style({opacity: 0})
+			.transition().delay(3000).style({visibility: 'hidden'});
 	};
 
-	var resetMasking = function(svg, myPlot) {
+	var resetMasking = function() {
 		if (maskedData.length === 0) return;
 		maskedData = [];
 		svg.selectAll('.masked').classed('masked', false);
@@ -621,9 +635,17 @@ module.exports = function () {
 	var maskData = function(obj, range, plotObj) {
 		var ind = -1,
 			classFlag = true,
-			p = svg.selectAll('.point');
+			p = svg.selectAll('.point'),
+			originalMask;
+		var applyMaskFlag = function(tar, k, flg) {
+			tar.forEach(function(v, j) {
+				d3.select(v[k - 1]).selectAll('circle').classed('masked', flg);
+			});
+		};
 
 		if (typeof range === 'number') range = [range, range];
+		originalMask = maskedData.slice(); // copy array
+
 		for (var i=range[0]; i<=range[1]; i++) {
 			ind = maskedData.indexOf(i);
 			if (ind === -1) {
@@ -633,27 +655,11 @@ module.exports = function () {
 				maskedData.splice(ind, 1);
 				classFlag = false;
 			}
-			p.selectAll('g').forEach(function(v, j) {
-				d3.select(v[i - 1]).selectAll('circle')
-					.classed('masked', classFlag);
-			});
+			applyMaskFlag(p.selectAll('g'), i, classFlag);
 		}
 		if (maskedData.length === data.cycleNumber) {
-			alert('You can\'t mask all cycles!');
-			for (i=range[0]; i<=range[1]; i++) {
-				ind = maskedData.indexOf(i);
-				if (ind === -1) {
-					maskedData.push(i);
-					classFlag = true;
-				} else {
-					maskedData.splice(ind, 1);
-					classFlag = false;
-				}
-				p.selectAll('g').forEach(function(v, j) {
-					d3.select(v[i - 1]).selectAll('circle')
-						.classed('masked', classFlag);
-				});
-			}
+			alert('Nope');
+			resetMasking();
 			return;
 		}
 		plottypes.forEach(function(v, i) {
@@ -764,68 +770,6 @@ module.exports = function () {
 		});
 	};
 
-	var isotopeSysConfig = function(iso) {
-		var iso = Object.keys(data.cps)[0].replace(/\d+/, '');
-		if (iso === 'O' || iso === 'O2') {
-			// [0: 16O, 1: 16O 1H, 2: 18O]
-			var Scale = VSMOW,
-				dRatio = ['18O', '16O'], // [numerator, denominator]
-				hRatio = ['16O 1H', '16O'],
-				color = {
-					cps: {
-						'16O':    'red',
-						'18O':    'green',
-						'16O 1H': '#00A7EA',
-						'16O1H': '#00A7EA'
-					},
-					hydride: '#24557F',
-					delta: 'magenta'
-				},
-				label = {
-					cps: 'cps',
-					hydride: formatLabels('16O1H/16O'),
-					delta: formatLabels('delta18O'),
-				},
-				suffix = {
-					hydride: '',
-					delta: '[\u2030]'
-				};
-
-		} else if (iso === 'C') {
-			// [0: 12C, 1: 13C, 2: 13C 1H]
-			var Scale = PDB,
-				dRatio = ['13C', '12C']; // [numerator, denominator]
-				hRatio = ['13C 1H', '13C'],
-				color = {
-					cps: {
-						'12C':    'red',
-						'13C':    'green',
-						'13C 1H': '#00A7EA',
-						'13C1H': '#00A7EA'
-					},
-					hydride: '#24557F',
-				delta: 'magenta'
-				},
-				label = {
-					cps: 'cps',
-					hydride: formatLabels('13C1H/13C'),
-					delta: formatLabels('delta13C'),
-				},
-				suffix = {
-					hydride: '',
-					delta: '[\u2030]'
-				};
-		}
-
-		return {
-			deltaScale: Scale,
-			deltaRatio: dRatio,
-			hydrideRatio: hRatio,
-			color: color,
-			labels: label,
-			suffix: suffix
-		};
-	};
 
 	var formatLabels = function(txt) {
 		var pa1 = /(\d+)/g,
@@ -839,17 +783,18 @@ module.exports = function () {
 	var getRange = function(dataType, plotYMargin) {
 		// plotYMargin [%]
 		var values = [],
-			myKeys = [],
-			i = 0,
-			vMargin = averages.length ? 0.5 : 0;
+				myKeys = [],
+				i = 0,
+				k = 0,
+				vMargin = averages.length ? 0.5 : 0;
 		plotYMargin = plotYMargin || 20;
 
 		if (dataType === 'cps') {
 			myKeys = d3.keys(data.plotData[0].cps);
 			for (i=0; i<data.plotData.length; i++) {
-				myKeys.forEach(function(v) {
-					values.push(data.plotData[i].cps[v]);
-				});
+				for (k in myKeys) {
+					values.push(data.plotData[i].cps[myKeys[k]]);
+				}
 			}
 		} else {
 			data.plotData.forEach(function(v, i) {
@@ -859,6 +804,68 @@ module.exports = function () {
 		var vmax = d3.max(values), vmin = d3.min(values);
 		plotYMargin = Math.abs(vmax - vmin) * plotYMargin / 100 || 0;
 		return [vmin - plotYMargin, vmax + plotYMargin * (1 + vMargin)];
+	};
+
+	var isotopeSysConfig = function() {
+		var iso = Object.keys(data.cps)[0].replace(/\d+/, '');
+		// [0: 16O, 1: 16O 1H, 2: 18O]
+		var Scale = VSMOW,
+			dRatio = ['18O', '16O'], // [numerator, denominator]
+			hRatio = ['16O 1H', '16O'],
+			color = {
+				cps: {
+					'16O':    'red',
+					'18O':    'green',
+					'16O 1H': '#00A7EA',
+					'16O1H': '#00A7EA'
+				},
+				hydride: '#24557F',
+				delta: 'magenta'
+			},
+			label = {
+				cps: 'cps',
+				hydride: formatLabels('16O1H/16O'),
+				delta: formatLabels('delta18O'),
+			},
+			suffix = {
+				hydride: '',
+				delta: '[\u2030]'
+			};
+
+		if (iso === 'C') {
+			// [0: 12C, 1: 13C, 2: 13C 1H]
+				Scale = PDB;
+				dRatio = ['13C', '12C']; // [numerator, denominator], ratio for delta
+				hRatio = ['13C 1H', '13C'];
+				color = {
+					cps: {
+						'12C':    'red',
+						'13C':    'green',
+						'13C 1H': '#00A7EA',
+						'13C1H': '#00A7EA'
+					},
+					hydride: '#24557F',
+					delta: 'magenta'
+			};
+			label = { // for y axes and legends
+					cps: 'cps',
+					hydride: formatLabels('13C1H/13C'),
+					delta: formatLabels('delta13C'),
+			};
+			suffix = { // units and etc...
+				hydride: '',
+				delta: '[\u2030]'
+			};
+		}
+
+		return {
+			deltaScale: Scale,
+			deltaRatio: dRatio,
+			hydrideRatio: hRatio,
+			color: color,
+			labels: label,
+			suffix: suffix
+		};
 	};
 
 	var f02 = d3.format('0.2f');

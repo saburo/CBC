@@ -170,6 +170,11 @@ module.exports = function() {
     return out;
   };
 
+  my.getEMHVData = function() {
+    var opt = {offset: 2, length: 10};
+    return my.getListedContents('EM HV DATA', opt);
+  };
+
   my.getBeamCenteringResults = function() {
     var opt = {offset: 4, length: 10, label: 2};
     return my.getTabulatedContents('BEAM CENTERING RESULTS', opt);

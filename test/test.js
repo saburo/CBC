@@ -6,7 +6,9 @@ var data = fs.readFileSync(__dirname + '/data/20140624@6.asc', 'utf8');
 var line, key;
 
 describe('ASC parser', function(){
+
   describe('public functions', function(){
+
     describe('init parser', function() {
       it('wait parser initialization', function() {
         var status = ps.init(data);
@@ -15,6 +17,7 @@ describe('ASC parser', function(){
         assert.equal(238, ps.getKeys().length);
       });
     });
+
     describe('parsing parts', function() {
       it('parse lines', function() {
         ps.parseLines(data);
@@ -182,8 +185,27 @@ describe('ASC parser', function(){
         assert.deepEqual(['16O', '16O 1H', '18O'], Object.keys(cps));
         assert.strictEqual(5.786162E+6, cps['18O'][17]);
       });
-    });
 
+    });
+    describe('parse EM HV data with New Data', function() {
+
+      it('parse new data', function() {
+        var data = fs.readFileSync(__dirname + '/data/20151207@6.asc', 'utf8');
+        assert.equal(true, ps.init(data));
+      });
+      
+      it('parse em hv data', function() {
+        var em = ps.getEMHVData();
+        var k = Object.keys(em);
+        assert.strictEqual(5, k.length);
+        assert.strictEqual('Detector', k[1]);
+        assert.strictEqual('adjust (digits)', k[4]);
+        assert.strictEqual('13C', em['Measurement Species']);
+        assert.strictEqual('at end', em.Mode);
+        assert.strictEqual(2884, em['EM HV (digits)']);
+        assert.strictEqual(3, em['adjust (digits)']);
+      });
+    });
   });
 
 

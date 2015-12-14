@@ -11,7 +11,7 @@ global.browserWindow = remote.require('browser-window');
 /**** Menu ****/
 require('./menu');
 
-var XLS = require('xlsx');
+var XLS = require('xlsx-browerify-shim');
 global.$ = require('jquery');
 global.jQuery = global.$;
 
@@ -20,7 +20,7 @@ require('jquery-ui');
 var bootstrap = require('bootstrap'),
     base64 = require('urlsafe-base64');
 
-var ps = require('../common/asc_parser'),
+var ps = require('../common/asc_parser3'),
     // pt = require('../common/plot');
     pt = require('../common/plot2');
 
@@ -166,7 +166,7 @@ var getExcelCommentList = function(list, excelPath) {
     } else {
         mySpreadSheet = [excelPath];
     }
-    if (mySpreadSheet.length == 1) {
+    if (mySpreadSheet.length === 1) {
         myComments = parseExcelComments(path.join(myPath, mySpreadSheet[0]));
     } else if (mySpreadSheet.length > 1) {
         excelMultiFlag = mySpreadSheet;
@@ -273,7 +273,7 @@ var updatePlot = function(fileName, comm, mask) {
     // config.averages.push('cps');
     pt.plottype(config.plottypes)
         .average(intersect(config.averages, config.plottypes))
-        .title(config.titles)
+        .title(config.titles);
     if (fileName) {
         fs.readFile(path.join(myPath, fileName), 'utf8', function(err, data) {
             if (err) throw err;
@@ -300,7 +300,7 @@ var previewPlot = function() {
         .plottype(conf.plottypes)
         .average(conf.averages)
         .draw('#myPlot');
-}
+};
 
 var getDataDir = function(defaultDir) {
     defaultDir = defaultDir || app.getPath('userDesktop');
@@ -310,7 +310,7 @@ var getDataDir = function(defaultDir) {
         properties: ['openDirectory']
     });
 
-    if (retval == undefined) {
+    if (retval === undefined) {
         return false;
     } else {
         return retval[0];

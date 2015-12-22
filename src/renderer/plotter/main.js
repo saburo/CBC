@@ -30,7 +30,8 @@ var myPath = '',
     configPath = path.join(app.getPath('userData'), 'preferences.json'),
     searchBase = [],
     configStates = {},
-    excelMultiFlag = [];
+    excelMultiFlag = [],
+    allData = [];
 
 
 
@@ -69,21 +70,32 @@ var updateFileList = function(myDir, myExcel, cb) {
             CommOrigin = '',
             content = [],
             item = '',
-            i = 0;
+            i = 0,
+            tmp;
             searchBase = [];
-
+        allData = [];
         for (i in ascList) {
+            if (ps.init(fs.readFileSync(path.join(myDir, ascList[i]), 'utf8'))) {
+                tmp = ps.parseAll();
+                allData.push(tmp);
+                console.log(tmp.anaParams['Sec.Anal.pressure (mb)']);
+            } else {
+              console.log('Error: parseAll');
+            }
             content = [];
             if (excelComments.hasOwnProperty(ascList[i])) {
                 Comm = excelComments[ascList[i]];
                 CommOrigin = '';
             } else {
-                Comm = getComment(path.join(myDir, ascList[i]));
-                CommOrigin = $('<span/>').addClass('glyphicon glyphicon-text-background')
-                                         .attr('aria-hidden', true);
+
+              // Comm = getComment(path.join(myDir, ascList[i]));
+              Comm = tmp.comment;
+              CommOrigin = $('<span/>').addClass('glyphicon glyphicon-text-background')
+                                        .attr('aria-hidden', true);
+
             }
-            content.push($('<p/>').addClass('asc-file-comment').text(Comm));
-            content.push($('<p/>').addClass('asc-file-name').text(ascList[i]));
+            content.push($('<p/>').addClass('asc-file-comment').text(Comm + ': ' + Math.round(tmp.cummRes.R1['Delta Value(permil)']*100)/100));
+            content.push($('<p/>').addClass('asc-file-name').text(ascList[i] + ': ' + tmp.anaParams['Sec.Anal.pressure (mb)']));
             content.push($('<p/>').addClass('asc-file-comment-origin').append(CommOrigin));
             item = $('<li/>').addClass('asc-file')
                              .attr({'data-asc': ascList[i], 'data-comment': Comm });
@@ -91,6 +103,7 @@ var updateFileList = function(myDir, myExcel, cb) {
             item.append(content);
             myListItems.push(item);
         }
+        console.log(allData);
         $('#asc-list').html('').append(myListItems);
         $('.asc-file').on('click', function() {
             $('.current').removeClass('current');
@@ -740,5 +753,5 @@ if (tmp) {
     $('svg').html('');
 }
 initConfigInputs();
-updateFileList(myPath, myExcelFile);
+// updateFileList(myPath, myExcelFile);
 updateWindow(ipc.sendSync('getContentSize'));

@@ -231,13 +231,47 @@ module.exports = function() {
     var fName = my.getFileInfo().asc.name;
     var cps = my.getCPS();
     var cycleNumber = cps[Object.keys(cps)[0]].length;
-    var st = this.statCPS(cps);
+    var st = my.statCPS(cps);
+
     return {
       cps: cps,
       cycleNumber: cycleNumber,
       comment: comment,
       stat: st,
       ascName: fName,
+    };
+  };
+
+  my.parseAll = function() {
+    if (lines.length === 0) return false;
+
+    // var comment = my.getDescription();
+    // var fName = my.getFileInfo().asc.name;
+    var cps = my.getCPS();
+    var cycleNumber = cps[Object.keys(cps)[0]].length;
+    var st = my.statCPS(cps);
+    return {
+      cps: cps,
+      cycleNumber: cycleNumber,
+      stat: st,
+      ascName: my.getFileInfo().asc.name,
+      datetime: my.getDateTime(),
+      fileInfo: my.getFileInfo(),
+      comment: my.getDescription(),
+      sampleName: my.getSampleName(),
+      stagePosition: my.getStagePosition(),
+      acqParams: my.getAcquisitionParams(),
+      anaParams: my.getAnalyticalParams(),
+      comments: my.getComments(),
+      detParams: my.getDetectorParams(),
+      corrFactor: my.getCorrectionFactorStatus(),
+      acqCtrParams: my.getAcquisitionControlParams(),
+      presputtering: my.getPresputteringParams(),
+      isoRatioDef: my.getIsotopicRatioDefinitions(),
+      cummRes: my.getCummulatedResults(),
+      priaryBeam: my.getPrimaryBeamIntensity(),
+      emhv: my.getEMHVData(),
+      beamcentering: my.getBeamCenteringResults()
     };
   };
 

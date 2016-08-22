@@ -23,7 +23,8 @@ module.exports = function () {
 
 
 		PDB = 0.0112372,
-		VSMOW = 0.00200520;
+		VSMOW = 0.00200520,
+		CDT = 0.044162589;
 
 	function my() {}
 
@@ -134,7 +135,6 @@ module.exports = function () {
 			avLine = obj.select('.average-line');
 			avText = d3.select('.average-text.average-text-'+t);
 			l = data.plotData.length;
-
 			if (avLine.empty()) {
 				var yVal;
 				if (t === 'cps') {
@@ -278,6 +278,7 @@ module.exports = function () {
 		var x = 0, y = 0;
 		var xAxis, yAxis;
 		var t;
+
 		for (var i in plottypes) {
 			t = plottypes[i];
 			// Create scales
@@ -807,6 +808,7 @@ module.exports = function () {
 	};
 
 	var isotopeSysConfig = function() {
+		var iso2 = String(Object.keys(data.cps));
 		var iso = Object.keys(data.cps)[0].replace(/\d+/, '');
 		// [0: 16O, 1: 16O 1H, 2: 18O]
 		var Scale = VSMOW,
@@ -851,6 +853,80 @@ module.exports = function () {
 					cps: 'cps',
 					hydride: formatLabels('13C1H/13C'),
 					delta: formatLabels('delta13C'),
+			};
+			suffix = { // units and etc...
+				hydride: '',
+				delta: '[\u2030]'
+			};
+
+		} else if (iso2 === '32S,33S,34S,36S') {
+			// [0: 32S, 1: 33S, 2: 34S, 3: 36S]
+			Scale = CDT;
+			dRatio = ['34S', '32S']; // [numerator, denominator], ratio for delta
+			var dRatio2 = ['33S', '32S']; // [numerator, denominator], ratio for delta
+			var dRatio3 = ['36S', '32S']; // [numerator, denominator], ratio for delta
+			hRatio = ['33S', '32S']; // no hydride signal
+			color = {
+				cps: {
+					'32S':    'red',
+					'33S':    'orange',
+					'34S':    'green',
+					'36S':    'blueviolet'
+				},
+				hydride: '#24557F',
+				delta: 'magenta'
+			};
+			label = { // for y axes and legends
+					cps: 'cps',
+					hydride: formatLabels('33S/32S'),
+					delta: formatLabels('delta34S'),
+			};
+			suffix = { // units and etc...
+				hydride: '',
+				delta: '[\u2030]'
+			};
+		} else if (iso2 === '32S,33S,34S') {
+			// [0: 32S, 1: 33S, 2: 34S]
+			Scale = CDT;
+			dRatio = ['34S', '32S']; // [numerator, denominator], ratio for delta
+			// var dRatio2 = ['33S', '32S']; // [numerator, denominator], ratio for delta
+			// var dRatio3 = ['36S', '32S']; // [numerator, denominator], ratio for delta
+			hRatio = ['33S', '32S']; // no hydride signal
+			color = {
+				cps: {
+					'32S':    'red',
+					'33S':    'orange',
+					'34S':    'green',
+				},
+				hydride: '#24557F',
+				delta: 'magenta'
+			};
+			label = { // for y axes and legends
+					cps: 'cps',
+					hydride: formatLabels('33S/32S'),
+					delta: formatLabels('delta34S'),
+			};
+			suffix = { // units and etc...
+				hydride: '',
+				delta: '[\u2030]'
+			};
+		} else if (iso2 === '32S,34S') {
+			// [0: 32S, 1: 34S]
+			Scale = CDT;
+			dRatio = ['34S', '32S']; // [numerator, denominator], ratio for delta
+			hRatio = []; // no hydride signal
+			color = {
+				cps: {
+					'32S':    'red',
+					'34S':    'green'
+				},
+				hydride: '#24557F',
+				delta: 'magenta'
+			};
+			label = { // for y axes and legends
+					cps: 'cps',
+					// hydride: formatLabels('34S/32S'),
+					delta: formatLabels('delta34S'),
 			};
 			suffix = { // units and etc...
 				hydride: '',

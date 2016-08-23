@@ -72,6 +72,7 @@ module.exports = function () {
 		data = values;
 		stat = data.stat;
 		config = isotopeSysConfig();
+		plottypes = my.filterPlotTypes();
 		data.plotData = makePlotData(data);
 
 		return my;
@@ -127,7 +128,7 @@ module.exports = function () {
 
 	my.updateAverage = function() {
 		var obj, myStat, avLine, avText, l;
-		var aves =
+		var aves = '';
 		averages.forEach(function(t, i) {
 			if (plottypes.indexOf(t) === -1) return;
 			obj = myPlot[t];
@@ -201,17 +202,21 @@ module.exports = function () {
 
 			if (t === 'cps') {
 				var xOffset = 0;
-				var myParents = d3.selectAll('.legend-item')[0];
+				var tmp = d3.selectAll('.legend')[0];
+				var myLegend = d3.select(tmp[tmp.length - 1]);
+				var myParents = myLegend.selectAll('.legend-item')[0];
 				d3.keys(stat).forEach(function(v, i) {
-					var myTarget = d3.select('.ave2se-' + v.replace(' ',''));
-					myTarget.on('click', function() {
-						var myStat = calcAverage('cps');
-						copyDataToClickBoard(myStat[v].mean * Math.pow(10, stat[v].order) + '\t' +
-																 myStat[v].se2 * Math.pow(10, stat[v].order));
-					});
+					var li = d3.select(myParents[i]);
+					var myTarget = li.select('.ave2se-' + v.replace(' ',''));
+					if (!printFlag) {
+						myTarget.on('click', function() {
+							var myStat = calcAverage('cps');
+							copyDataToClickBoard(myStat[v].mean * Math.pow(10, stat[v].order) + '\t' +
+																	 myStat[v].se2 * Math.pow(10, stat[v].order));
+						});
+					}
 					var myOrder = ' [\u00D710<tspan baseline-shift="super" font-size="60%">' + stat[v].order + '</tspan>]';
 					myTarget.html(': ' + f04(myStat[v].mean) + ' ± ' + f04(myStat[v].se2) + myOrder);
-					var li = d3.select(myParents[i]);
 					li.attr({transform: 'translate(' + xOffset + ',0)'});
 					xOffset += li.node().getBBox().width + 20; // padding-right = 20
 					d3.select('.average-line-'+v.replace(' ','')).transition()
@@ -229,12 +234,23 @@ module.exports = function () {
 		});
 	};
 
+	my.filterPlotTypes = function() {
+		var out = plottypes.filter(function(v, i) {
+			if (v==='cps') return true;
+			if (v==='hydride' && config.hydrideRatio.length)  return true;
+			if (v==='delta') return true;
+			return false;
+		});
+		return out;
+	};
+
 	// ===========================================================================
 	my.draw = function(target) {
 		svg = d3.select(target);
+		var plotCounts = plottypes.length;
 		var mouseReceiver;
 		var width = frameWidth - (margin.left + margin.right),
-			height = (frameHeight - (margin.top + margin.bottom)) / plottypes.length; // divide by number of plots
+			height = (frameHeight - (margin.top + margin.bottom)) / plotCounts; // divide by number of plots
 		svg.html('').append('g').append('rect').classed('background', true).attr({
 			width: frameWidth,
 			height: frameHeight,
@@ -244,7 +260,7 @@ module.exports = function () {
 		var container = svg.append('g').classed('chart-frame', true);
 		svg.attr({
 			width: width + margin.left + margin.right,
-			height: plottypes.length * height + margin.top + margin.bottom
+			height: plotCounts * height + margin.top + margin.bottom
 		});
 		svg.append('g').classed('title', true)
 			.append('text')
@@ -258,10 +274,10 @@ module.exports = function () {
 			var vline = container.append('g').attr({
 					transform: 'translate(' + margin.left + ',' + margin.top + ')',
 					width: width,
-					height: plottypes.length * height,
+					height: plotCounts * height,
 				}).append('line').classed('vline hide', true).attr({
 					x1: 0, x2: 0,
-					y1: 0, y2: plottypes.length * height,
+					y1: 0, y2: plotCounts * height,
 					fill: 'none',
 					stroke: 'rgba(255,0,255,0.8)',
 					'stroke-width': 0.2
@@ -269,7 +285,7 @@ module.exports = function () {
 
 			var maskedArea = container.append('g').classed('masked-area', true)
 							.append('rect').attr({
-								height: plottypes.length * height,
+								height: plotCounts * height,
 								width: 0,
 								transform: 'translate(' + margin.left + ',' + margin.top + ')',
 								fill: 'rgba(255,0,0,0.1)'
@@ -295,7 +311,7 @@ module.exports = function () {
 						width: width,
 						height: height,
 					});
-			var lastFlag = (parseInt(i) === (parseInt(plottypes.length) - 1)) ? true : false;
+			var lastFlag = (parseInt(i) === (parseInt(plotCounts) - 1)) ? true : false;
 			// Create Axis bases
 			xAxis = makeAxis(myPlot[t], 'x', t, height, lastFlag);
 			yAxis = makeAxis(myPlot[t], 'y', t, width);
@@ -330,7 +346,7 @@ module.exports = function () {
 			mouseReceiver = container.append('g').classed('mouse-receiver', true).append('rect').attr({
 				transform: 'translate(' + margin.left + ',' + margin.top + ')',
 				width: width,
-				height: plottypes.length * height,
+				height: plotCounts * height,
 				fill: 'rgba(255,255,255,0)'
 			});
 		}
@@ -493,28 +509,35 @@ module.exports = function () {
 		var l = data.cps[myKeys[0]].length,
 			i = 0,
 			cycleData = {},
-			hydrideRatio = [];
+			hydrideRatio = [],
+			hydrideOrder,
+			nume, deno;
 
-		var nume = data.cps[config.hydrideRatio[0]],
-		deno = data.cps[config.hydrideRatio[1]];
-		for (i=0; i<l; i++) {
-			hydrideRatio.push(nume[i] / deno[i]);
+		if (plottypes.indexOf('hydride') > 0) {
+			nume = data.cps[config.hydrideRatio[0]];
+			deno = data.cps[config.hydrideRatio[1]];
+			for (i=0; i<l; i++) {
+				hydrideRatio.push(nume[i] / deno[i]);
+			}
+			hydrideOrder = Math.ceil(Math.log(d3.mean(hydrideRatio)) / Math.LN10) - 1;
+			config.order = {hydride: hydrideOrder};
 		}
-		var hydrideOrder = Math.ceil(Math.log(d3.mean(hydrideRatio)) / Math.LN10) - 1;
-		config.order = {hydride: hydrideOrder};
+
 
 		nume = data.cps[config.deltaRatio[0]];
 		deno = data.cps[config.deltaRatio[1]];
 		for (i=0; i<l; i++) { // cycle loop
-		cycleData = {cycle: (i + 1)}; // init + add cycle key
-		cycleData.cps = {};
-		for (var k in myKeys) { // isotope loop for cps
-			var key = myKeys[k];
-			cycleData.cps[key] = data.cps[key][i] / Math.pow(10, data.stat[key].order);
-		}
-		cycleData.delta = (nume[i] / deno[i] / config.deltaScale - 1) * 1000;
-		cycleData.hydride = hydrideRatio[i] / Math.pow(10, hydrideOrder);
-		out.push(cycleData);
+			cycleData = {cycle: (i + 1)}; // init + add cycle key
+			cycleData.cps = {};
+			for (var k in myKeys) { // isotope loop for cps
+				var key = myKeys[k];
+				cycleData.cps[key] = data.cps[key][i] / Math.pow(10, data.stat[key].order);
+			}
+			cycleData.delta = (nume[i] / deno[i] / config.deltaScale - 1) * 1000;
+			if (plottypes.indexOf('hydride') > 0) {
+				cycleData.hydride = hydrideRatio[i] / Math.pow(10, hydrideOrder);
+			}
+			out.push(cycleData);
 		}
 		return out;
 	};
@@ -741,7 +764,7 @@ module.exports = function () {
 			var myLegText = li.append('text')
 				.attr(myAttrForText)
 				.style({
-					'font-size': '12px',
+					'font-size': legendTxtSize + 'px',
 					'text-anchor': 'start'
 				});
 			myLegText.append('tspan').html(formatLabels(v));

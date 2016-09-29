@@ -162,7 +162,7 @@ var getExcelCommentList = function(list, excelPath) {
         wb = XLS.readFile(sheetPath).Sheets.Sum_table;
         console.log('test: %s', /\.asc$/.test(wb['A4'].v))
         if (wb.hasOwnProperty('A4') && !/\.asc$/.test(wb['A4'].v)) {
-            console.log('go');
+            console.log('parsing by go');
             comments = parseExcelCommentsGo(sheetPath);
         } else {
             for (i=2; i<= wb['!range'].e.r; i++) {
@@ -192,7 +192,6 @@ var getExcelCommentList = function(list, excelPath) {
             });
             return false;
         })) return comments;
-        console.log('outside');
         return comments;
     };
 
@@ -212,7 +211,6 @@ var getExcelCommentList = function(list, excelPath) {
     }
     if (mySpreadSheet.length === 1) {
         myComments = parseExcelComments(path.join(myPath, mySpreadSheet[0]));
-        console.log('myComments', myComments);
     } else if (mySpreadSheet.length > 1) {
         excelMultiFlag = mySpreadSheet;
     }

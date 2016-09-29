@@ -442,7 +442,7 @@ module.exports = function () {
 					currentX = (data.cycleNumber < currentX) ? data.cycleNumber : 1;
 				}
 				maskedArea.attr({width: 0}).classed('hide', true);
-				maskData(container, maskRange, myPlot);
+				maskData(container, maskRange, myPlot, d3.event.sourceEvent.shiftKey);
 				vline.attr({x1: current, x2: current })
 									.classed('hide', false);
 				startPointX = -1;
@@ -657,7 +657,7 @@ module.exports = function () {
 		}
 	};
 
-	var maskData = function(obj, range, plotObj) {
+	var maskData = function(obj, range, plotObj, inverseFlag=false) {
 		var ind = -1,
 			classFlag = true,
 			p = svg.selectAll('.point'),
@@ -670,6 +670,13 @@ module.exports = function () {
 
 		if (typeof range === 'number') range = [range, range];
 		originalMask = maskedData.slice(); // copy array
+
+		if (inverseFlag) {
+			maskedData = data.cps[Object.keys(data.cps)[0]].map(function(v, k) {
+				applyMaskFlag(p.selectAll('g'), k + 1, true);
+				return k + 1;
+			});
+		}
 
 		for (var i=range[0]; i<=range[1]; i++) {
 			ind = maskedData.indexOf(i);

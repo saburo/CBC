@@ -2,12 +2,11 @@
 
 var fs = require('fs'),
     path = require('path'),
-    ipc  = require('ipc'),
-    remote = require('remote'),
-    dialog = remote.require('dialog'),
-    app = remote.require('app');
-global.browserWindow = remote.require('browser-window');
-
+    ipcRenderer  = require('electron').ipcRenderer,
+    remote = require('electron').remote,
+    dialog = remote.dialog,
+    app = remote.app;
+global.browserWindow = remote;
 /**** Menu ****/
 require('./menu');
 
@@ -15,41 +14,43 @@ var XLS = require('xlsx-browerify-shim');
 global.$ = require('jquery');
 global.jQuery = global.$;
 
+global.myDebug = null;
+
 require('jquery-ui');
 
-var bootstrap = require('bootstrap'),
-    base64 = require('urlsafe-base64');
 
-var ps = require('../common/asc_parser3'),
+var bootstrap = require('bootstrap');
+var base64 = require('urlsafe-base64');
+
+var ps = require('../common/asc_parser3');
     // pt = require('../common/plot');
-    pt = require('../common/plot2');
+var pt = require('../common/plot2');
 
 var defWinSize = remote.getGlobal('defaultWindowSize');
-var myPath = '',
-    myExcelFile,
-    configPath = path.join(app.getPath('userData'), 'preferences.json'),
-    searchBase = [],
-    configStates = {},
-    excelMultiFlag = [],
-    allData = [];
+var myPath = '';
+var myExcelFile;
+var configPath = path.join(app.getPath('userData'), 'preferences.json');
+var searchBase = [];
+var configStates = {};
+var excelMultiFlag = [];
+var allData = [];
 
 
 
-/**** IPCs ****/
-
-ipc.on('async-reply-print-done', function(status) {
+/**** ipcRenderers ****/
+ipcRenderer.on('async-reply-print-done', function(event, status) {
     window.clearInterval(timerId);
     completeProgressBar();
 });
 
-ipc.on('window-resized', function(winSize) {
+ipcRenderer.on('window-resized', function(event, winSize) {
     updateWindow(winSize);
 });
 
-ipc.on('move-next', function() {
+ipcRenderer.on('move-next', function() {
     moveNext();
 });
-ipc.on('move-prev', function() {
+ipcRenderer.on('move-prev', function() {
     movePrev();
 });
 
@@ -74,20 +75,23 @@ var updateFileList = function(myDir, myExcel, cb) {
             tmp;
             searchBase = [];
         allData = [];
+        console.log('excelComments', excelComments);
+        myDebug = excelComments;
         for (i in ascList) {
             if (ps.init(fs.readFileSync(path.join(myDir, ascList[i]), 'utf8'))) {
                 tmp = ps.parseAll();
                 allData.push(tmp);
-                console.log(tmp.anaParams['Sec.Anal.pressure (mb)']);
+                // console.log(tmp.anaParams['Sec.Anal.pressure (mb)']);
             } else {
               console.log('Error: parseAll');
             }
             content = [];
+            console.log("asc: %s, hasOwn: %s", ascList[i], excelComments.hasOwnProperty(ascList[i]));
             if (excelComments.hasOwnProperty(ascList[i])) {
                 Comm = excelComments[ascList[i]];
                 CommOrigin = '';
             } else {
-
+                console.log('asc');
               // Comm = getComment(path.join(myDir, ascList[i]));
               Comm = tmp.comment;
               CommOrigin = $('<span/>').addClass('glyphicon glyphicon-text-background')
@@ -103,7 +107,7 @@ var updateFileList = function(myDir, myExcel, cb) {
             item.append(content);
             myListItems.push(item);
         }
-        console.log(allData);
+        // console.log(allData);
         $('#asc-list').html('').append(myListItems);
         $('.asc-file').on('click', function() {
             $('.current').removeClass('current');
@@ -142,12 +146,12 @@ var getASCList = function(list) {
 };
 
 var getExcelCommentList = function(list, excelPath) {
-    var pattern = /\.xls$/,
-        mySpreadSheet = [],
-        sheetIndex = -1,
-        wb = '',
-        i = 2,
-        myComments = {};
+    var pattern = /\.xls$/;
+    var mySpreadSheet = [];
+    var sheetIndex = -1;
+    var wb = '';
+    var i = 2;
+    var myComments = {};
     var ascPattern = /\.asc$/;
     var ascList = list.filter(function(f) {
         return f.match(ascPattern);
@@ -156,12 +160,39 @@ var getExcelCommentList = function(list, excelPath) {
         // path = path.join(myPath, mySpreadSheet[0]);
         var comments = {};
         wb = XLS.readFile(sheetPath).Sheets.Sum_table;
-        for (i=2; i<= wb['!range'].e.r; i++) {
-            if (wb.hasOwnProperty('A'+i)) {
-                comments[wb['A'+i].v] = wb['B'+i].v;
-                // myComments[wb['A'+i].v] = wb['B'+i].v;
+        console.log('test: %s', /\.asc$/.test(wb['A4'].v))
+        if (wb.hasOwnProperty('A4') && !/\.asc$/.test(wb['A4'].v)) {
+            console.log('go');
+            comments = parseExcelCommentsGo(sheetPath);
+        } else {
+            for (i=2; i<= wb['!range'].e.r; i++) {
+                if (wb.hasOwnProperty('A'+i)) {
+                    if (typeof wb['B'+i] === 'undefined') continue;
+                    comments[wb['A'+i].v] = wb['B'+i].v;
+                    // myComments[wb['A'+i].v] = wb['B'+i].v;
+                }
             }
         }
+        return comments;
+    };
+
+    var parseExcelCommentsGo = function(sheetPath) {
+        var exePath = __dirname + '/../common/sum_table_parser';
+        var exec = require('child_process').exec;
+        var cmd = exePath + ' ' + sheetPath;
+        var comments = {};
+        if (exec(cmd, function(error, stdout, stderr) {
+            var mylist = stdout.split(/\n/);
+            var out2 = {};
+            var tmp = [];
+            var a = mylist.map(function (v) {
+                out2 = {};
+                tmp = v.split(/\t/);
+                if (tmp[0] !== "") comments[tmp[0]] = tmp[1];
+            });
+            return false;
+        })) return comments;
+        console.log('outside');
         return comments;
     };
 
@@ -181,10 +212,12 @@ var getExcelCommentList = function(list, excelPath) {
     }
     if (mySpreadSheet.length === 1) {
         myComments = parseExcelComments(path.join(myPath, mySpreadSheet[0]));
+        console.log('myComments', myComments);
     } else if (mySpreadSheet.length > 1) {
         excelMultiFlag = mySpreadSheet;
     }
-    if (excelPath === undefined && ascList.length !== Object.keys(myComments).length) {
+    // if (excelPath === undefined && ascList.length !== Object.keys(myComments).length) {
+    if (excelPath === undefined) {
         if (Object.keys(myComments).length > 0) {
             excelMultiFlag = mySpreadSheet;
         }
@@ -410,7 +443,7 @@ var saveAsPDF = function () {
             }
         };
         updateSaveProgress();
-        ipc.send('saveAsPDF', args);
+        ipcRenderer.send('saveAsPDF', args);
     });
 };
 
@@ -523,7 +556,7 @@ var updateSaveProgress = function () {
         var val = remote.getGlobal('saveProgress');
         if (val >= 90 && val < 99 && div%3 === 0) {
             div = 1;
-            ipc.send('current-rendering', {val: val/1 + 1});
+            ipcRenderer.send('current-rendering', {val: val/1 + 1});
         }
         div += 1;
         $('.progress-bar').attr({'aria-valuenow': val}).css({width: val + '%'}).text(val + '%');
@@ -740,10 +773,11 @@ $('.remove-icon, .hit-numbers').hide();
 $('#configModal, #exportModal').draggable({
     handle: ".modal-header"
 });
-// myPath = '/Users/saburo/Desktop/R/TEST_SIMS_DATA/20140624_d18O_garnet_stds_Kouki';
-// myPath = '/Users/saburo/Desktop/Data/data_asc_only';
-var tmp = '/Users/saburo/Desktop/Data/data_asc_only';
+var tmp = '/Users/saburo/Desktop/DATA/20140624_d18O_garnet_stds_Kouki';
+// var tmp = '/Users/saburo/Desktop/Data/data_asc_only';
+// var tmp = '/Users/saburo/Desktop/Sub-Maciej';
 // var tmp = getDataDir();
+
 if (tmp) {
     myPath = tmp;
     resetSearchBox();
@@ -754,4 +788,4 @@ if (tmp) {
 }
 initConfigInputs();
 // updateFileList(myPath, myExcelFile);
-updateWindow(ipc.sendSync('getContentSize'));
+updateWindow(ipcRenderer.sendSync('getContentSize'));

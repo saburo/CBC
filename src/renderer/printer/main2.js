@@ -1,15 +1,15 @@
 var fs = require('fs'),
     path = require('path'),
-    remote = require('remote'),
-    ipc = require('ipc'),
+    // remote = require('electron').remote,
+    ipcRenderer = require('electron').ipcRenderer,
     d3 = require('d3'),
     ps = require('../common/asc_parser'),
     pt = require('../common/plot2');
 
 
 var myPath = '';
-ipc.send('getPrintPDFArgs', 'test');
-ipc.on('async-reply-getPrintPDFArgs', function(args) {
+ipcRenderer.send('getPrintPDFArgs', 'test');
+ipcRenderer.on('async-reply-getPrintPDFArgs', function(e, args) {
     myPath = args.dir;
     var fileName = '',
         i = 0,
@@ -17,6 +17,7 @@ ipc.on('async-reply-getPrintPDFArgs', function(args) {
         lastFname = args.Files[args.Files.length-1].name;
 
     var adjust = 1.22,
+    // var adjust = 0.80,
         dpi = 72,
         scale = dpi * adjust,
         sizeL = 0,
@@ -45,25 +46,42 @@ ipc.on('async-reply-getPrintPDFArgs', function(args) {
     var total = args.Files.length;
     for (i in args.Files) {
         myList[args.Files[i].name] = args.Files[i];
-        ipc.send('current-rendering', {val: Math.round(80 *(i/1 + 1) / total) });
+        ipcRenderer.send('current-rendering', {val: Math.round(80 * (i/1 + 1) / total)});
 
-        fs.readFile(path.join(myPath, args.Files[i].name), 'utf8', function(err, data) {
-            if (err) throw err;
+        var data = fs.readFileSync(path.join(myPath, args.Files[i].name), 'utf8');
+        // if (err) throw err;
 
-            var p = ps.parseAsc(data),
-                o = myList[p.ascName],
-                myId = p.ascName.replace(/\.asc/, '').replace(/@/, '-');
+        var p = ps.parseAsc(data),
+            o = myList[p.ascName],
+            myId = p.ascName.replace(/\.asc/, '').replace(/@/, '-');
 
-            var svg = d3.select('#print_area')
-                        .append('svg').attr('id', 'svg-' + myId)
-                        .classed('sep_pages', true);
+        var svg = d3.select('#print_area')
+                    .append('div').classed('sep_pages', true)
+                    .append('svg').attr('id', 'svg-' + myId);
 
-            pt.setData(p)
-              .comment(o.comment)
-              .filename(p.ascName)
-              .draw('#svg-' + myId);
+        pt.setData(p)
+          .comment(o.comment)
+          .filename(p.ascName)
+          .draw('#svg-' + myId);
 
-            if (lastFname == p.ascName) ipc.send('rendering-done', args);
-        });
+        if (lastFname == p.ascName) ipcRenderer.send('rendering-done', args);
+        // fs.readFile(path.join(myPath, args.Files[i].name), 'utf8', function(err, data) {
+        //     if (err) throw err;
+
+        //     var p = ps.parseAsc(data),
+        //         o = myList[p.ascName],
+        //         myId = p.ascName.replace(/\.asc/, '').replace(/@/, '-');
+
+        //     var svg = d3.select('#print_area')
+        //                 .append('svg').attr('id', 'svg-' + myId)
+        //                 .classed('sep_pages', true);
+
+        //     pt.setData(p)
+        //       .comment(o.comment)
+        //       .filename(p.ascName)
+        //       .draw('#svg-' + myId);
+
+        //     if (lastFname == p.ascName) ipcRenderer.send('rendering-done', args);
+        // });
     }
 });

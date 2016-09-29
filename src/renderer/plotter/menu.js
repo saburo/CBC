@@ -1,9 +1,9 @@
 'use strict';
 
-var remote = require('remote'),
-    Menu = remote.require('menu'),
-    MenuItem = remote.require('menu-item'),
-    app = remote.require('app');
+var remote = require('electron').remote,
+    Menu = remote.Menu,
+    MenuItem = remote.MenuItem,
+    app = remote.app;
 
 var template = [
     {
@@ -157,7 +157,8 @@ var template = [
 ];
 
 if (process.platform == 'darwin') {
-  var name = remote.require('app').getName();
+  // var name = remote.require('app').getName();
+  var name = require('electron').remote.app.getName();
   template.unshift({
     label: name,
     submenu: [

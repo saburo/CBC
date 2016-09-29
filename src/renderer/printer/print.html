@@ -5,16 +5,17 @@
   <meta http-equiv="Content-Language" content="en">
   <title>print preview</title>
   <link rel="stylesheet" type="text/css" href="../../../static/css/svg.css">
-  <style type="text/css" media="print">
+  <style type="text/css">
     @media print {
       .current-values,
       .vline {
         display: none;
       }
-/*      svg {
-        font-family: Helvetica, sans-serif;
+      .sep_pages {
+        /*page-break-before: always;*/
+        page-break-after: always;
       }
-*/      .sep_pages {
+      svg {
         page-break-before: always;
       }
       #print_area {
@@ -25,21 +26,7 @@
         padding: 0;
         margin: 0;
       }
-/*      .axis text {
-        font: 12px sans-serif;
-      }
-      .axis path,
-      .axis line {
-        fill: none;
-        stroke: #000;
-        stroke-width: 1.2;
-        shape-rendering: crispEdges;
-      }
-      .masked {
-        /*fill: rgba(200,200,200,0.8);*/
-        fill-opacity: 0.1;
-      }
-*/    }
+    }
 
   </style>
 </head>

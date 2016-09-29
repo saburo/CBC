@@ -1,9 +1,10 @@
 "use strict";
 
-var app = require('app');  // Module to control application life.
-var BrowserWindow = require('browser-window');  // Module to create native browser window.
-var ipc = require('ipc');
-var dialog = require('dialog');
+var app = require('electron').app;  // Module to control application life.
+var BrowserWindow = require('electron').BrowserWindow;  // Module to create native browser window.
+var ipcMain = require('electron').ipcMain;
+var dialog = require('electron');
+const {crashReporter} = require('electron');
 var fs = require('fs');
 
 var defaultWindowSize = {
@@ -19,7 +20,7 @@ global.defaultWindowSize = defaultWindowSize;
 global.saveProgress = 0;
 
 // Report crashes to our server.
-require('crash-reporter').start();
+// crashReporter.start({});
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -51,7 +52,7 @@ app.on('ready', function() {
     });
 
     // and load the index.html of the app.
-    plotterWindow.loadUrl('file://' + __dirname + '/../renderer/plotter/plotter.html');
+    plotterWindow.loadURL('file://' + __dirname + '/../renderer/plotter/plotter.html');
 
     // Open the DevTools.
     // plotterWindow.openDevTools();
@@ -74,34 +75,34 @@ app.on('ready', function() {
 
 var printPDF_args = {};
 
-ipc.on('getPrintPDFArgs', function(e, arg) {
+ipcMain.on('getPrintPDFArgs', function(e, arg) {
     e.sender.send('async-reply-getPrintPDFArgs', printPDF_args);
 });
 
 var printWin;
 var savePDFEvent;
 
-ipc.on('saveAsPDF', function(e, arg) {
+ipcMain.on('saveAsPDF', function(e, arg) {
     // create invisible window for printing
     savePDFEvent = e;
     printPDF_args = arg;
     printWin = new BrowserWindow({
         width: 100,
         height: 100,
-        show: false
+        show: true
     });
     printWin.on('closed', function() {
         printWin = null;
     });
-    printWin.loadUrl('file://' + __dirname + '/../renderer/printer/print.html');
+    printWin.loadURL('file://' + __dirname + '/../renderer/printer/print.html');
     // printWin.openDevTools();
 });
 
-ipc.on('current-rendering', function(e, arg) {
+ipcMain.on('current-rendering', function(event, arg) {
     global.saveProgress = arg.val;
 });
 
-ipc.on('rendering-done', function(e, arg) {
+ipcMain.on('rendering-done', function(event, arg) {
     global.saveProgress = 90;
     printWin.webContents.printToPDF({
         pageSize: arg.paperSize,
@@ -113,11 +114,11 @@ ipc.on('rendering-done', function(e, arg) {
         fs.writeFile(printPDF_args.destPath, data, function(err) {
             if(err) alert('genearte pdf error', err);
             savePDFEvent.sender.send('async-reply-print-done', true);
-            printWin.close();
+            // printWin.close();
         });
     });
 });
 
-ipc.on('getContentSize', function(event) {
+ipcMain.on('getContentSize', function(event, args) {
     event.returnValue = plotterWindow.getContentSize();
 });

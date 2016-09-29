@@ -1,7 +1,7 @@
 var fs = require('fs'),
     path = require('path'),
-    remote = require('remote'),
-    ipc = require('ipc'),
+    remote = require('electron').remote,
+    ipc = require('electron').ipcRenderer,
     d3 = require('d3'),
     ps = require('../common/asc_parser'),
     pt = require('../common/plot');

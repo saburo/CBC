@@ -18,7 +18,8 @@ packager({
     // platform: 'darwin,win32',
     platform: platform,
     arch: 'x64',
-    version: '0.34.1',
+    version: '1.4.0',
+    // version: '0.34.1',
     // version: '0.30.0',
     icon: './resources/icon', //<- アプリアイコン
 
@@ -29,7 +30,7 @@ packager({
     overwrite: true,
     asar: true,
     prune: true,
-    ignore: "node_modules/(electron-packager|electron-prebuilt|\.bin)|release\.js|\.DS_Store",
+    ignore: "node_modules/(electron|electron-packager|electron-prebuilt|\.bin)|release\.js|\.DS_Store",
     'version-string': {
         CompanyName: 'WiscSIMS',
         FileDescription: 'Cycle by cycle plot for Stable Isotope MonkeyS',

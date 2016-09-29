@@ -165,11 +165,12 @@ module.exports = function () {
 				}
 			}
 
-			if (avText.empty() && t !== 'cps') {
-				avText = d3.select('.chart-frame')
+			if ((printFlag || avText.empty()) && t !== 'cps') {
+				var myCF = d3.selectAll('.chart-frame')[0];
+				myCF = myCF[myCF.length - 1];
+				avText = d3.select(myCF)
 									.append('g')
 									.append('text').classed('average-text average-text-' + t, true);
-				// avText = obj.append('g').append('text').classed('average-text', true);
 				var parentPos = myPlot[t].attr('transform').match(/([\.\-\d]+)/ig);
 				avText.attr({
 					fill: config.color[t],
@@ -474,7 +475,7 @@ module.exports = function () {
 
 	// private functions
 	var copyDataToClickBoard = function(data) {
-		var clipboard = require('clipboard');
+		const {clipboard} = require('electron');
 		clipboard.writeText(data);
 		var myAlert = d3.select('.clipboard-alert');
 		if (myAlert.empty()) {
@@ -733,12 +734,14 @@ module.exports = function () {
 	var addCPSLegend = function() {
 		var obj = myPlot.cps;
 		var parentPos = obj.attr('transform').match(/([\.\-\d]+)/ig);
-		if (!d3.select('.legend').empty()) return;
+		if (!printFlag && !d3.select('.legend').empty()) return;
 		var keys = d3.keys(stat);
 		var legendXPos = data.cycleNumber>40 ? parseInt(data.cycleNumber/20) : 1;
-		var legend = d3.select('.chart-frame').append('g').classed('legend', true).attr({
+		var myCF = d3.selectAll('.chart-frame')[0];
+		var legend = d3.select(myCF[myCF.length - 1]).append('g').classed('legend', true).attr({
 			transform: 'translate('+ (parentPos[0]/1 + myScale.cps.x(legendXPos)) + ',' + (parentPos[1]/1 + 20) + ')'
 		});
+		var legendTxtSize = keys.length > 3 ? 10 : 12;
 		var color = config.color.cps;
 		var li = '';
 		var r = circleSize;

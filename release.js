@@ -18,15 +18,15 @@ packager({
     // platform: 'darwin,win32',
     platform: platform,
     arch: 'x64',
-    version: '1.4.0',
+    version: '1.4.4',
     // version: '0.34.1',
     // version: '0.30.0',
-    icon: './resources/icon', //<- アプリアイコン
+    icon: './resources/icon', // app icon
 
-    'app-bundle-id': 'edu.wisc.geology.wiscsims', //<- 自分のドメインなどを使用してください
+    'app-bundle-id': 'edu.wisc.geology.wiscsims', // your domain
 
     'app-version': config.version,
-    'helper-bundle-id': 'edu.wisc.geology.wiscsims', //<- 自分のドメインなどを使用してください
+    'helper-bundle-id': 'edu.wisc.geology.wiscsims', // your domain
     overwrite: true,
     asar: true,
     prune: true,

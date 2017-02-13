@@ -89,7 +89,7 @@ ipcMain.on('saveAsPDF', function(e, arg) {
     printWin = new BrowserWindow({
         width: 100,
         height: 100,
-        show: true
+        show: false
     });
     printWin.on('closed', function() {
         printWin = null;
@@ -114,7 +114,7 @@ ipcMain.on('rendering-done', function(event, arg) {
         fs.writeFile(printPDF_args.destPath, data, function(err) {
             if(err) alert('genearte pdf error', err);
             savePDFEvent.sender.send('async-reply-print-done', true);
-            // printWin.close();
+            printWin.close();
         });
     });
 });

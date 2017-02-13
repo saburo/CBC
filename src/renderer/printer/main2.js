@@ -3,7 +3,7 @@ var fs = require('fs'),
     // remote = require('electron').remote,
     ipcRenderer = require('electron').ipcRenderer,
     d3 = require('d3'),
-    ps = require('../common/asc_parser'),
+    ps = require('../common/asc_parser3'),
     pt = require('../common/plot2');
 
 

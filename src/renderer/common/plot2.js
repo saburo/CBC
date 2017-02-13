@@ -18,13 +18,18 @@ module.exports = function () {
 		config,
 		myScale = {},
 		maskedData = [],
-		circleSize = 5,
+		circleSize = 4,
 		myPlot = {},
 
 
 		PDB = 0.0112372,
 		VSMOW = 0.00200520,
-		CDT = 0.044162589;
+		// VSMOW17 = 0.000379939, // wikipedia (VSMOW)
+		VSMOW17 = 0.00038300,  // back calc from .asc data
+		CDT   = 1 / 22.6436,
+		CDT33 = 1 / 126.948,
+		CDT36 = 1 / 6641;  // Taka's value
+		// CDT36 = 1 / 6515;  // CDT
 
 	function my() {}
 
@@ -182,7 +187,7 @@ module.exports = function () {
 				.on('click', function() {
 					var myOrder;
 					var myStat = calcAverage(t);
-					if (t === 'delta') {
+					if (/delta/i.test(t)) {
 						myOrder = 1;
 					} else if (t === 'hydride') {
 						myOrder = Math.pow(10, config.order.hydride);
@@ -230,7 +235,7 @@ module.exports = function () {
 				});
 			} else {
 				var suffix = (t==='hydride') ? ' [\u00D710<tspan baseline-shift="super" font-size="60%">' + config.order.hydride + '</tspan>]' : ' [\u2030]';
-				avText.html('Average & 2SE: ' + f02(myStat.mean) + ' ± ' + f02(myStat.se2) + suffix);
+				avText.html('Average & 2SE: ' + f03(myStat.mean) + ' ± ' + f03(myStat.se2) + suffix);
 			}
 		});
 	};
@@ -238,15 +243,69 @@ module.exports = function () {
 	my.filterPlotTypes = function() {
 		var out = plottypes.filter(function(v, i) {
 			if (v==='cps') return true;
-			if (v==='hydride' && config.hydrideRatio.length)  return true;
-			if (v==='delta') return true;
+			if (v==='hydride' && /H$/.test(data.isoSys)) return true;
+			if (/^d/i.test(v)) return true;
 			return false;
 		});
 		return out;
 	};
 
+	my.checkMultiDelta = function() {
+		if (config.deltaScale2 && plottypes.indexOf('delta2') < 0) {
+			var hydrideIndex = plottypes.indexOf('hydride');
+			if (hydrideIndex > -1) {
+				plottypes.splice(hydrideIndex, 1);
+			}
+			var deltaPos = plottypes.indexOf('delta');
+			if (deltaPos > -1) {
+				plottypes.splice(deltaPos + 1, 0, 'delta2');
+				var averageDeltaPos = averages.indexOf('delta');
+				if (averageDeltaPos > -1) {
+					averages.splice(averageDeltaPos + 1, 0, 'delta2');
+				}
+			}
+		}
+		if (config.deltaScale3 && plottypes.indexOf('delta3') < 0) {
+			var deltaPos = plottypes.indexOf('delta2');
+			if (deltaPos > -1) {
+				plottypes.splice(deltaPos + 1, 0, 'delta3');
+				var averageDeltaPos = averages.indexOf('delta2');
+				if (averageDeltaPos > -1) {
+					averages.splice(averageDeltaPos + 1, 0, 'delta3');
+				}
+			}
+		}
+		if (config.capDelta && plottypes.indexOf('capDelta') < 0) {
+			var deltaPos = plottypes.indexOf('delta3');
+			if (deltaPos == -1) {
+				deltaPos = plottypes.indexOf('delta2');
+			}
+			if (deltaPos > -1) {
+				plottypes.splice(deltaPos + 1, 0, 'capDelta');
+				var averageDeltaPos = averages.indexOf('delta3');
+				if (averageDeltaPos == -1) {
+					averageDeltaPos = averages.indexOf('delta2');
+				}
+				if (averageDeltaPos > -1) {
+					averages.splice(averageDeltaPos + 1, 0, 'capDelta');
+				}
+			}
+		}
+		if (config.capDelta2 && plottypes.indexOf('capDelta2') < 0) {
+			var deltaPos = plottypes.indexOf('capDelta');
+			if (deltaPos > -1) {
+				plottypes.splice(deltaPos + 1, 0, 'capDelta2');
+				var averageDeltaPos = averages.indexOf('capDelta');
+				if (averageDeltaPos > -1) {
+					averages.splice(averageDeltaPos + 1, 0, 'capDelta2');
+				}
+			}
+		}
+	};
+
 	// ===========================================================================
 	my.draw = function(target) {
+		my.checkMultiDelta();
 		svg = d3.select(target);
 		var plotCounts = plottypes.length;
 		var mouseReceiver;
@@ -263,6 +322,7 @@ module.exports = function () {
 			width: width + margin.left + margin.right,
 			height: plotCounts * height + margin.top + margin.bottom
 		});
+		var clipBoxes = container.append('defs').attr('id', 'clip-boxes');
 		svg.append('g').classed('title', true)
 			.append('text')
 			.append('tspan').classed('title-text', true);
@@ -306,6 +366,14 @@ module.exports = function () {
 			myScale.x = myScale[t].x;
 			// Create plot frame
 			x = margin.left; y = (margin.top/1 + i * height/1);
+			// create clip path
+			clipBoxes.append('clipPath').attr('id', 'clipPath' + t)
+					.append('rect').attr({
+						width: width,
+						height:height,
+						// transform: "translate(" + x + "," + y + ")"
+						transform: "translate(0,0)"
+					});
 			myPlot[t] = container.append('g').classed('plot ' + t, true)
 					.attr({
 						transform: "translate(" + x + "," + y + ")",
@@ -369,11 +437,11 @@ module.exports = function () {
 		 */
 		if (!printFlag) {
 			d3.select('.background').on('dblclick', function() {
-				resetMasking();
+				resetMasking(target);
 			});
 
 			d3.select('.resetMaskBtn').on('click', function() {
-				resetMasking();
+				resetMasking(target);
 				d3.select(this).classed('hide', true);
 			});
 
@@ -407,7 +475,7 @@ module.exports = function () {
 
 			mouseReceiver.on('dblclick', function() {
 				if (isHover(this)) return;
-				resetMasking();
+				resetMasking(target);
 			});
 
 			// data masking
@@ -442,11 +510,11 @@ module.exports = function () {
 					currentX = (data.cycleNumber < currentX) ? data.cycleNumber : 1;
 				}
 				maskedArea.attr({width: 0}).classed('hide', true);
-				maskData(container, maskRange, myPlot, d3.event.sourceEvent.shiftKey);
-				vline.attr({x1: current, x2: current })
-									.classed('hide', false);
+				maskData(target, container, maskRange, myPlot, d3.event.sourceEvent.shiftKey);
+				vline.attr({x1: current, x2: current }).classed('hide', false);
 				startPointX = -1;
 				d3.select('.resetMaskBtn').classed('hide', !maskedData.length);
+				my.draw(target);
 			};
 
 			var drag = d3.behavior.drag()
@@ -492,16 +560,17 @@ module.exports = function () {
 			.transition().delay(3000).style({visibility: 'hidden'});
 	};
 
-	var resetMasking = function() {
+	var resetMasking = function(target="#myPlot") {
 		if (maskedData.length === 0) return;
 		maskedData = [];
 		svg.selectAll('.masked').classed('masked', false);
-		plottypes.map(function(t) {
-			myPlot[t].selectAll('.connLines').remove();
-			drawConnLine(myPlot[t], t);
-		});
-		my.updateAverage();
-		d3.select('.resetMaskBtn').classed('hide', true);
+		my.draw(target);
+		// plottypes.map(function(t) {
+		// 	myPlot[t].selectAll('.connLines').remove();
+		// 	drawConnLine(myPlot[t], t);
+		// });
+		// my.updateAverage();
+		// d3.select('.resetMaskBtn').classed('hide', true);
 	};
 
 	var makePlotData = function() {
@@ -514,7 +583,7 @@ module.exports = function () {
 			hydrideOrder,
 			nume, deno;
 
-		if (plottypes.indexOf('hydride') > 0) {
+		if (plottypes.indexOf('hydride') > -1) {
 			nume = data.cps[config.hydrideRatio[0]];
 			deno = data.cps[config.hydrideRatio[1]];
 			for (i=0; i<l; i++) {
@@ -527,6 +596,15 @@ module.exports = function () {
 
 		nume = data.cps[config.deltaRatio[0]];
 		deno = data.cps[config.deltaRatio[1]];
+
+		if (config.deltaScale2) {
+			var nume2 = data.cps[config.deltaRatio2[0]];
+			var deno2 = data.cps[config.deltaRatio2[1]];
+			if (config.deltaScale3) {
+				var nume3 = data.cps[config.deltaRatio3[0]];
+				var deno3 = data.cps[config.deltaRatio3[1]];
+			}
+		}
 		for (i=0; i<l; i++) { // cycle loop
 			cycleData = {cycle: (i + 1)}; // init + add cycle key
 			cycleData.cps = {};
@@ -535,7 +613,19 @@ module.exports = function () {
 				cycleData.cps[key] = data.cps[key][i] / Math.pow(10, data.stat[key].order);
 			}
 			cycleData.delta = (nume[i] / deno[i] / config.deltaScale - 1) * 1000;
-			if (plottypes.indexOf('hydride') > 0) {
+			if (config.deltaScale2) {
+				cycleData.delta2 = (nume2[i] / deno2[i] / config.deltaScale2 - 1) * 1000;
+				if (config.deltaScale3) {
+					cycleData.delta3 = (nume3[i] / deno3[i] / config.deltaScale3 - 1) * 1000;
+				}
+				if (config.capDelta) {
+					cycleData.capDelta = config.capDelta(cycleData.delta, cycleData.delta2)
+					if (config.capDelta2) {
+						cycleData.capDelta2 = config.capDelta2(cycleData.delta, cycleData.delta3)
+					}
+				}
+			}
+			if (plottypes.indexOf('hydride') > -1) {
 				cycleData.hydride = hydrideRatio[i] / Math.pow(10, hydrideOrder);
 			}
 			out.push(cycleData);
@@ -600,8 +690,9 @@ module.exports = function () {
 				.attr({
 					cx: function(d) { return myScale[t].x(d.cycle); },
 					cy: function(d) { return myScale[t].y(t==='cps' ? d.cps[v] : d[t]); },
-					r: size||10, stroke: 'none',
-					fill: t==='cps' ? config.color[t][v] : config.color[t]
+					r: size||7, stroke: 'none',
+					fill: t==='cps' ? config.color[t][v] : config.color[t],
+					"clip-path": "url(#clipPath" + t + ")",
 				});
 		});
 	};
@@ -632,22 +723,31 @@ module.exports = function () {
 				};
 			}
 			return out;
-		} else {
-			filterMaskedData().forEach(function(o, i) {
-				v.push(o[t]);
-				alpha.push(o[t]/1000 + 1);
-			});
-		}
-		if (t === 'delta') {
-			return {
+		} 
+
+		filterMaskedData().forEach(function(o, i) {
+			v.push(o[t]);
+			alpha.push(o[t] / 1000 + 1);
+		});
+		// console.log(t, v);
+		if (/^delta/.test(t)) {
+			out = {
 				mean:   d3.mean(v),
 				stdev2: 2 * 1000 * d3.deviation(alpha) / d3.mean(alpha),
 				se2:  2 * 1000 * (d3.deviation(alpha) / Math.sqrt(alpha.length)) / d3.mean(alpha),
 				min:  d3.min(v),
 				max:  d3.max(v)
 			};
+		} else if (/^capDelta/.test(t)) {
+			out = {
+				mean:   d3.mean(v),
+				stdev2: d3.deviation(v) * 2,
+				se2:  (d3.deviation(v) * 2) / Math.sqrt(v.length),
+				min:  d3.min(v),
+				max:  d3.max(v)
+			};
 		} else {
-			return {
+			out = {
 				mean:   d3.mean(v),
 				stdev2: d3.deviation(v) * 2,
 				se2:  (d3.deviation(v) * 2) / Math.sqrt(v.length),
@@ -655,9 +755,11 @@ module.exports = function () {
 				max:  d3.max(v)
 			};
 		}
+
+		return out;
 	};
 
-	var maskData = function(obj, range, plotObj, inverseFlag=false) {
+	var maskData = function(target, obj, range, plotObj, inverseFlag=false) {
 		var ind = -1,
 			classFlag = true,
 			p = svg.selectAll('.point'),
@@ -691,7 +793,7 @@ module.exports = function () {
 		}
 		if (maskedData.length === data.cycleNumber) {
 			alert('Nope');
-			resetMasking();
+			resetMasking(target);
 			return;
 		}
 		plottypes.forEach(function(v, i) {
@@ -807,10 +909,12 @@ module.exports = function () {
 
 	var formatLabels = function(txt) {
 		var pa1 = /(\d+)/g,
-		re1 = '<tspan baseline-shift="super" font-size="60%">$1</tspan>',
-		pa2 = /delta/g,
-		re2 = '\u03B4',
-		ret = txt.replace(' ', '').replace(pa1, re1).replace(pa2,re2);
+				re1 = '<tspan baseline-shift="super" font-size="60%">$1</tspan>',
+				pa2 = /^d/,
+				re2 = '\u03B4',
+				pa3 = /^D/,
+				re3 = '\u0394',
+				ret = txt.replace(' ', '').replace(pa1, re1).replace(pa2,re2).replace(pa3,re3);
 		return '<tspan>' + ret + '</tspan>';
 	};
 
@@ -821,53 +925,79 @@ module.exports = function () {
 				i = 0,
 				k = 0,
 				vMargin = averages.length ? 0.5 : 0;
-		plotYMargin = plotYMargin || 20;
+		plotYMargin = plotYMargin || 30;
 
+		var dd = filterMaskedData();
 		if (dataType === 'cps') {
-			myKeys = d3.keys(data.plotData[0].cps);
-			for (i=0; i<data.plotData.length; i++) {
+			myKeys = d3.keys(dd[0].cps);
+			for (i=0; i<dd.length; i++) {
 				for (k in myKeys) {
-					values.push(data.plotData[i].cps[myKeys[k]]);
+					values.push(dd[i].cps[myKeys[k]]);
 				}
 			}
 		} else {
-			data.plotData.forEach(function(v, i) {
-				values.push(data.plotData[i][dataType]);
+			dd.forEach(function(v, i) {
+				values.push(dd[i][dataType]);
 			});
 		}
+
+		// if (dataType === 'cps') {
+		// 	myKeys = d3.keys(data.plotData[0].cps);
+		// 	for (i=0; i<data.plotData.length; i++) {
+		// 		for (k in myKeys) {
+		// 			values.push(data.plotData[i].cps[myKeys[k]]);
+		// 		}
+		// 	}
+		// } else {
+		// 	data.plotData.forEach(function(v, i) {
+		// 		values.push(data.plotData[i][dataType]);
+		// 	});
+		// }
 		var vmax = d3.max(values), vmin = d3.min(values);
 		plotYMargin = Math.abs(vmax - vmin) * plotYMargin / 100 || 0;
 		return [vmin - plotYMargin, vmax + plotYMargin * (1 + vMargin)];
 	};
 
 	var isotopeSysConfig = function() {
-		var iso2 = String(Object.keys(data.cps));
-		var iso = Object.keys(data.cps)[0].replace(/\d+/, '');
+		// var iso2 = String(Object.keys(data.cps));
+		// var iso = Object.keys(data.cps)[0].replace(/\d+/, '');
+		// console.log(data.isoSys);
+
+		// default values (d18O with OH)
+		// O2H (oxygen two isotopes with OH)
 		// [0: 16O, 1: 16O 1H, 2: 18O]
 		var Scale = VSMOW,
+			Scale2 = null,
+			Scale3 = null,
 			dRatio = ['18O', '16O'], // [numerator, denominator]
+			dRatio2 = null,
+			dRatio3 = null,
+			capDelta = null,
+			capDelta2 = null,
 			hRatio = ['16O 1H', '16O'],
 			color = {
 				cps: {
 					'16O':    'red',
 					'18O':    'green',
 					'16O 1H': '#00A7EA',
-					'16O1H': '#00A7EA'
+					'16O1H':  '#00A7EA'
 				},
 				hydride: '#24557F',
-				delta: 'magenta'
+				delta:   'magenta',
 			},
 			label = {
 				cps: 'cps',
 				hydride: formatLabels('16O1H/16O'),
-				delta: formatLabels('delta18O'),
+				delta: formatLabels('d18O'),
 			},
 			suffix = {
 				hydride: '',
-				delta: '[\u2030]'
+				delta: '[\u2030]',
 			};
 
-		if (iso === 'C') {
+		// if (iso === 'C') {
+		if (data.isoSys === 'C2H') {
+			// C2H (carbon two isotopes with CH)
 			// [0: 12C, 1: 13C, 2: 13C 1H]
 				Scale = PDB;
 				dRatio = ['13C', '12C']; // [numerator, denominator], ratio for delta
@@ -877,7 +1007,7 @@ module.exports = function () {
 						'12C':    'red',
 						'13C':    'green',
 						'13C 1H': '#00A7EA',
-						'13C1H': '#00A7EA'
+						'13C1H':  '#00A7EA'
 					},
 					hydride: '#24557F',
 					delta: 'magenta'
@@ -885,44 +1015,72 @@ module.exports = function () {
 			label = { // for y axes and legends
 					cps: 'cps',
 					hydride: formatLabels('13C1H/13C'),
-					delta: formatLabels('delta13C'),
+					delta: formatLabels('d13C'),
 			};
 			suffix = { // units and etc...
 				hydride: '',
 				delta: '[\u2030]'
 			};
 
-		} else if (iso2 === '32S,33S,34S,36S') {
+		// } else if (iso2 === '32S,33S,34S,36S') {
+		} else if (data.isoSys === 'S4') {
+			// S4 (sulfur four isotopes)
 			// [0: 32S, 1: 33S, 2: 34S, 3: 36S]
 			Scale = CDT;
+			Scale2 = CDT33;
+			Scale3 = CDT36;
+			capDelta = function(d34, d33) { // function(major, minor)
+				return d33 - 1000 * (Math.pow((d34/1000 + 1), 0.515) - 1)
+			};
+			capDelta2 = function(d34, d36) {
+				return d36 - 1000 * (Math.pow((d34/1000 + 1), 1.9) - 1)
+			};
 			dRatio = ['34S', '32S']; // [numerator, denominator], ratio for delta
-			var dRatio2 = ['33S', '32S']; // [numerator, denominator], ratio for delta
-			var dRatio3 = ['36S', '32S']; // [numerator, denominator], ratio for delta
+			dRatio2 = ['33S', '32S']; // [numerator, denominator], ratio for delta
+			dRatio3 = ['36S', '32S']; // [numerator, denominator], ratio for delta
 			hRatio = ['33S', '32S']; // no hydride signal
 			color = {
 				cps: {
-					'32S':    'red',
-					'33S':    'orange',
-					'34S':    'green',
-					'36S':    'blueviolet'
+					'32S': 'red',
+					'33S': 'orange',
+					'34S': 'green',
+					'36S': 'blueviolet'
 				},
 				hydride: '#24557F',
-				delta: 'magenta'
+				delta:   'magenta',
+				delta2:  '#3362CE',
+				delta3:  'blueviolet',
+				capDelta:  'pink',
+				capDelta2: 'red',
 			};
 			label = { // for y axes and legends
 					cps: 'cps',
 					hydride: formatLabels('33S/32S'),
-					delta: formatLabels('delta34S'),
+					delta:  formatLabels('d34S'),
+					delta2: formatLabels('d33S'),
+					delta3: formatLabels('d36S'),
+					capDelta: formatLabels('D33S'),
+					capDelta2: formatLabels('D36S'),
 			};
 			suffix = { // units and etc...
 				hydride: '',
-				delta: '[\u2030]'
+				delta: '[\u2030]',
+				delta2: '[\u2030]',
+				delta3: '[\u2030]',
+				capDelta: '[\u2030]',
+				capDelta2: '[\u2030]',
 			};
-		} else if (iso2 === '32S,33S,34S') {
+		// } else if (iso2 === '32S,33S,34S') {
+		} else if (data.isoSys === 'S3') {
+			// S3 (sulfur three isotopes)
 			// [0: 32S, 1: 33S, 2: 34S]
 			Scale = CDT;
+			Scale2 = CDT33;
+			capDelta = function(d34, d33) {
+				return d33 - 1000 * (Math.pow((d34/1000 + 1), 0.515) - 1)
+			};
 			dRatio = ['34S', '32S']; // [numerator, denominator], ratio for delta
-			// var dRatio2 = ['33S', '32S']; // [numerator, denominator], ratio for delta
+			dRatio2 = ['33S', '32S']; // [numerator, denominator], ratio for delta
 			// var dRatio3 = ['36S', '32S']; // [numerator, denominator], ratio for delta
 			hRatio = ['33S', '32S']; // no hydride signal
 			color = {
@@ -932,18 +1090,50 @@ module.exports = function () {
 					'34S':    'green',
 				},
 				hydride: '#24557F',
-				delta: 'magenta'
+				delta: 'magenta',
+				delta2: '#3362CE',
+				capDelta: 'pink',
 			};
 			label = { // for y axes and legends
 					cps: 'cps',
 					hydride: formatLabels('33S/32S'),
-					delta: formatLabels('delta34S'),
+					delta: formatLabels('d34S'),
+					delta2: formatLabels('d33S'),
+					capDelta: formatLabels('D33S'),
+			};
+			suffix = { // units and etc...
+				hydride: '',
+				delta: '[\u2030]',
+				delta2: '[\u2030]',
+			};
+		// } else if (iso2 === '32S,32S 1H,34S') {
+		} else if (data.isoSys === 'S2H') {
+			// S2H (sulfur two isotopes with SH)
+			Scale = CDT;
+			dRatio = ['34S', '32S'];
+			hRatio = ['32S 1H', '32S'];
+			color = {
+				cps: {
+					'32S':    'red',
+					'34S':    'green',
+					'32S 1H': '#00A7EA',
+					'32S1H': '#00A7EA'
+				},
+				hydride: '#24557F',
+				delta: 'magenta'
+			};
+			label = { // for y axes and legends
+					cps: 'cps',
+					hydride: formatLabels('32S1H/32S'),
+					delta: formatLabels('d34S'),
 			};
 			suffix = { // units and etc...
 				hydride: '',
 				delta: '[\u2030]'
 			};
-		} else if (iso2 === '32S,34S') {
+		// } else if (iso2 === '32S,34S') {
+		} else if (data.isoSys === 'S2') {
+			// S2 (sulfur two isotopes)
 			// [0: 32S, 1: 34S]
 			Scale = CDT;
 			dRatio = ['34S', '32S']; // [numerator, denominator], ratio for delta
@@ -959,17 +1149,64 @@ module.exports = function () {
 			label = { // for y axes and legends
 					cps: 'cps',
 					// hydride: formatLabels('34S/32S'),
-					delta: formatLabels('delta34S'),
+					delta: formatLabels('d34S'),
 			};
 			suffix = { // units and etc...
 				hydride: '',
 				delta: '[\u2030]'
 			};
+		// } else if (iso2 === '16O,17O,18O') {
+		} else if (data.isoSys === 'O3') {
+			// O3 (oxygen three isotopes)
+			// [0: 16O, 1: 17O, 2: 18O]
+			Scale = VSMOW;
+			Scale2 = VSMOW17;
+			capDelta = function(d18, d17) {
+				return d17 - 0.52 * d18;
+			};
+			dRatio = ['18O', '16O']; // [numerator, denominator], ratio for delta
+			dRatio2 = ['17O', '16O']; // [numerator, denominator], ratio for delta
+			// var dRatio3 = ['36S', '32S']; // [numerator, denominator], ratio for delta
+			hRatio = ['17O', '16O']; // no hydride signal
+			color = {
+				cps: {
+					'16O': 'red',
+					'17O': 'blue',
+					'18O': 'green',
+				},
+				hydride: '#24557F',
+				delta: 'magenta',
+				delta2: '#3362CE',
+				capDelta: 'red',
+			};
+			label = { // for y axes and legends
+					cps: 'cps',
+					hydride: formatLabels('17O/16O'),
+					delta: formatLabels('d18O'),
+					delta2: formatLabels('d17O'),
+					capDelta: formatLabels('D17O'),
+			};
+			suffix = { // units and etc...
+				hydride: '',
+				delta: '[\u2030]',
+				delta2: '[\u2030]',
+				capDelta: '[\u2030]',
+			};
 		}
 
 		return {
+
 			deltaScale: Scale,
+			deltaScale2: Scale2,
+			deltaScale3: Scale3,
+
 			deltaRatio: dRatio,
+			deltaRatio2: dRatio2,
+			deltaRatio3: dRatio3,
+
+			capDelta:  capDelta,
+			capDelta2: capDelta2,
+
 			hydrideRatio: hRatio,
 			color: color,
 			labels: label,

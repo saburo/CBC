@@ -180,10 +180,57 @@ module.exports = function() {
     return my.getTabulatedContents('BEAM CENTERING RESULTS', opt);
   };
 
+  my.getIso = function(asString=false) {
+    var iso = lines[keys.indexOf("#block") + 2].slice(1);
+    return asString ? String(iso).replace(/\s+/g, '') : iso;
+  }
+
+  my.getIsoSys = function() {
+    isosys = 'O2H';
+    myIso = my.getIso(true);
+    switch (myIso) {
+      // Carbon
+      case '12C,13C':
+        isosys = 'C2';
+        break;
+      case '12C,13C,13C1H':
+        isosys = 'C2H';
+        break;
+      // Oxygen
+      case '16O,16O1H,18O':
+        isosys = 'O2H';
+        break;
+      case '16O,18O':
+        isosys = 'O2';
+        break;
+      case '16O,17O,18O':
+        isosys = 'O3';
+        break;
+      // Silicon
+      case '28Si,30Si':
+        isosys = 'Si2';
+        break;
+      // Sulfur
+      case '32S,34S':
+        isosys = 'S2';
+        break;
+      case '32S,32S1H,34S':
+        isosys = 'S2H';
+        break;
+      case '32S,33S,34S':
+        isosys = 'S3';
+        break;
+      case '32S,33S,34S,36S':
+        isosys = 'S4';
+        break;
+    }
+    return isosys;
+  };
+
   my.getCPS = function() {
     var cpsIndex = keys.indexOf('#block') + 4,
         cpsIndex2 = keys.indexOf('#block', cpsIndex) - 4,
-        lab = lines[cpsIndex - 2].slice(1),
+        lab = my.getIso(),
         cps = {};
     for (var m = 0; m < lab.length; m++) {
       cps[lab[m]] = [];
@@ -234,6 +281,8 @@ module.exports = function() {
     var st = my.statCPS(cps);
 
     return {
+      iso: my.getIso(true),
+      isoSys: my.getIsoSys(),
       cps: cps,
       cycleNumber: cycleNumber,
       comment: comment,
@@ -251,6 +300,8 @@ module.exports = function() {
     var cycleNumber = cps[Object.keys(cps)[0]].length;
     var st = my.statCPS(cps);
     return {
+      iso: my.getIso(true),
+      isoSys: my.getIsoSys(),
       cps: cps,
       cycleNumber: cycleNumber,
       stat: st,

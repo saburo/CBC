@@ -27,6 +27,7 @@ var ps = require('../common/asc_parser3');
 var pt = require('../common/plot2');
 
 var defWinSize = remote.getGlobal('defaultWindowSize');
+var defaultDir = "";
 var myPath = '';
 var myExcelFile;
 var configPath = path.join(app.getPath('userData'), 'preferences.json');
@@ -75,7 +76,7 @@ var updateFileList = function(myDir, myExcel, cb) {
             tmp;
             searchBase = [];
         allData = [];
-        console.log('excelComments', excelComments);
+        // console.log('excelComments', excelComments);
         myDebug = excelComments;
         for (i in ascList) {
             if (ps.init(fs.readFileSync(path.join(myDir, ascList[i]), 'utf8'))) {
@@ -86,20 +87,21 @@ var updateFileList = function(myDir, myExcel, cb) {
               console.log('Error: parseAll');
             }
             content = [];
-            console.log("asc: %s, hasOwn: %s", ascList[i], excelComments.hasOwnProperty(ascList[i]));
+            // console.log("asc: %s, hasOwn: %s", ascList[i], excelComments.hasOwnProperty(ascList[i]));
             if (excelComments.hasOwnProperty(ascList[i])) {
                 Comm = excelComments[ascList[i]];
                 CommOrigin = '';
             } else {
-                console.log('asc');
+                // console.log('asc');
               // Comm = getComment(path.join(myDir, ascList[i]));
               Comm = tmp.comment;
               CommOrigin = $('<span/>').addClass('glyphicon glyphicon-text-background')
                                         .attr('aria-hidden', true);
 
             }
-            content.push($('<p/>').addClass('asc-file-comment').text(Comm + ': ' + Math.round(tmp.cummRes.R1['Delta Value(permil)']*100)/100));
-            content.push($('<p/>').addClass('asc-file-name').text(ascList[i] + ': ' + tmp.anaParams['Sec.Anal.pressure (mb)']));
+            var addition = Math.round(tmp.cummRes.R1['Delta Value(permil)']*100)/100;
+            content.push($('<p/>').addClass('asc-file-comment').text(Comm + ': ' + addition));
+            content.push($('<p/>').addClass('asc-file-name').text(ascList[i] + ': ' + tmp.anaParams['Sec.Anal.pressure (mb)'] + " [" + tmp.isoSys + "]"));
             content.push($('<p/>').addClass('asc-file-comment-origin').append(CommOrigin));
             item = $('<li/>').addClass('asc-file')
                              .attr({'data-asc': ascList[i], 'data-comment': Comm });
@@ -160,7 +162,7 @@ var getExcelCommentList = function(list, excelPath) {
         // path = path.join(myPath, mySpreadSheet[0]);
         var comments = {};
         wb = XLS.readFile(sheetPath).Sheets.Sum_table;
-        console.log('test: %s', /\.asc$/.test(wb['A4'].v))
+        // console.log('test: %s', /\.asc$/.test(wb['A4'].v))
         if (wb.hasOwnProperty('A4') && !/\.asc$/.test(wb['A4'].v)) {
             console.log('parsing by go');
             comments = parseExcelCommentsGo(sheetPath);
@@ -244,6 +246,10 @@ var reloadFolderItems = function() {
   });
 };
 
+
+/***
+ Config related
+***/
 var getConfig = function(param) {
     var out = [];
     var checked = $('.' + param + ' input:checked');
@@ -305,6 +311,27 @@ var saveConfig = function(conf) {
     });
 };
 
+var initConfigInputs = function() {
+    $('.plottypes, .titles').sortable({
+        update: function(e, ui) {previewPlot();}
+    }).disableSelection();
+    $('#configModal .plottypes input').on('change', function() {
+        var me = $(this);
+        if ($.inArray(me.val(), ['cps', 'hydride', 'delta'])>-1) {
+            var bool = me.prop('checked') ? false : true;
+            $('.averages input[value='+me.val()+']').prop('disabled', bool);
+        }
+    });
+    $('#configModal input').on('change', function() {
+      previewPlot();
+    });
+};
+
+
+/*****
+
+*****/
+
 var intersect = function(a, b) {
     return a.filter(function(e) {
         return $.inArray(e, b)>-1 ? true : false;
@@ -346,14 +373,17 @@ var previewPlot = function() {
         .draw('#myPlot');
 };
 
-var getDataDir = function(defaultDir) {
-    defaultDir = defaultDir || app.getPath('userDesktop');
-    var retval = dialog.showOpenDialog({
+var showFolderSelectDialog = function(defaultDir) {
+    return dialog.showOpenDialog({
         title: "Select data directory",
         defaultPath: defaultDir,
         properties: ['openDirectory']
     });
+}
 
+var getDataDir = function(defaultDir) {
+    defaultDir = defaultDir || app.getPath('userDesktop');
+    var retval = showFolderSelectDialog(defaultDir)
     if (retval === undefined) {
         return false;
     } else {
@@ -604,23 +634,6 @@ var movePrev = function() {
     }
 };
 
-var initConfigInputs = function() {
-    $('.plottypes, .titles').sortable({
-        update: function(e, ui) {previewPlot();}
-    }).disableSelection();
-    $('#configModal .plottypes input').on('change', function() {
-        var me = $(this);
-        if ($.inArray(me.val(), ['cps', 'hydride', 'delta'])>-1) {
-            var bool = me.prop('checked') ? false : true;
-            $('.averages input[value='+me.val()+']').prop('disabled', bool);
-        }
-    });
-    $('#configModal input').on('change', function() {
-      previewPlot();
-    });
-};
-
-
 /**** Event Listeners ****/
 //--- toolbar
 $('#exportas').on('click', function() {
@@ -771,19 +784,26 @@ $('.remove-icon, .hit-numbers').hide();
 $('#configModal, #exportModal').draggable({
     handle: ".modal-header"
 });
-var tmp = '/Users/saburo/Desktop/DATA/20140624_d18O_garnet_stds_Kouki';
+// var tmp = '/Users/saburo/Desktop/DATA/20140624_d18O_garnet_stds_Kouki';
 // var tmp = '/Users/saburo/Desktop/Data/data_asc_only';
 // var tmp = '/Users/saburo/Desktop/Sub-Maciej';
 // var tmp = getDataDir();
 
-if (tmp) {
-    myPath = tmp;
-    resetSearchBox();
-    updateFileList(myPath, myExcelFile);
-    $('#folderName').text(path.basename(myPath));
-    // $(this).attr('title', myPath);
-    $('svg').html('');
+if (!myPath) {
+    myPath = getDataDir();
 }
+
+if (!myPath) {
+    alert('Select directory');
+    return;
+}
+
+resetSearchBox();
+updateFileList(myPath, myExcelFile);
+$('#folderName').text(path.basename(myPath));
+// $(this).attr('title', myPath);
+$('svg').html('');
+
 initConfigInputs();
 // updateFileList(myPath, myExcelFile);
 updateWindow(ipcRenderer.sendSync('getContentSize'));

@@ -231,7 +231,6 @@ describe('ASC parser', function(){
     });
   });
 
-
   describe('private functions', function(){
 
     it('sum of numbers in array', function() {
@@ -299,6 +298,66 @@ describe('ASC parser', function(){
       assert.strictEqual(2.125, ps._private.round(2.1245, 3));
       assert.strictEqual(2, ps._private.round(2, 3));
     });
+  });
+
+
+
+  describe('parse various analysis conditions', function(){
+      it('Oxygen two isotopes with hydride', function() {
+        var data = fs.readFileSync(__dirname + '/data/20140624@5.asc', 'utf8');
+        assert.equal(true, ps.init(data));
+        var pa = ps.parseAll();
+        assert.strictEqual('O2H', pa.isoSys);
+      });
+
+      it('Oxygen three isotopes', function() {
+        var data = fs.readFileSync(__dirname + '/data/20170201@13.asc', 'utf8');
+        assert.equal(true, ps.init(data));
+        var pa = ps.parseAll();
+        assert.strictEqual('O3', pa.isoSys);
+      });
+
+      it('Carbon two isotopes with hydride', function() {
+        var data = fs.readFileSync(__dirname + '/data/20151207@6.asc', 'utf8');
+        assert.equal(true, ps.init(data));
+        var pa = ps.parseAll();
+        assert.strictEqual('C2H', pa.isoSys);
+      });
+
+      it('Sulfur two isotopes', function() {
+        var data = fs.readFileSync(__dirname + '/data/20090601@224.asc', 'utf8');
+        assert.equal(true, ps.init(data));
+        var pa = ps.parseAll();
+        assert.strictEqual('S2', pa.isoSys);
+      });
+
+      it('Sulfur two isotopes with hydride', function() {
+        var data = fs.readFileSync(__dirname + '/data/20161017@5.asc', 'utf8');
+        assert.equal(true, ps.init(data));
+        var pa = ps.parseAll();
+        assert.strictEqual('S2H', pa.isoSys);
+      });
+
+      it('Sulfur three isotopes', function() {
+        var data = fs.readFileSync(__dirname + '/data/20120124@6.asc', 'utf8');
+        assert.equal(true, ps.init(data));
+        var pa = ps.parseAll();
+        assert.strictEqual('S3', pa.isoSys);
+      });
+
+      it('Sulfur four isotopes', function() {
+        var data = fs.readFileSync(__dirname + '/data/20151228@7.asc', 'utf8');
+        assert.equal(true, ps.init(data));
+        var pa = ps.parseAll();
+        assert.strictEqual('S4', pa.isoSys);
+      });
+
+      it('CN isotopes', function() {
+        var data = fs.readFileSync(__dirname + '/data/20160713@133.asc', 'utf8');
+        assert.equal(true, ps.init(data));
+        var pa = ps.parseAll();
+        assert.strictEqual('CN', pa.isoSys);
+      });
   });
 
 });

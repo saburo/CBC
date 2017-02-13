@@ -186,7 +186,7 @@ module.exports = function() {
     out['Measurement Species'] = lines[keyPos][1].toUpperCase();
     Object.assign(out, my.getListedContents('REFERENCE SIGNAL', opt));
     Object.assign(out, my.getListedContents('DSP2-X shift (digits)', opt));
-    
+
     return out;
   };
 
@@ -237,6 +237,9 @@ module.exports = function() {
         break;
       case '32S,33S,34S,36S':
         isosys = 'S4';
+        break;
+      case '12C12C,12C13C,12C14N,12C15N':
+        isosys = 'CN';
         break;
     }
     return isosys;

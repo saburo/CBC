@@ -206,6 +206,29 @@ describe('ASC parser', function(){
         assert.strictEqual(3, em['adjust (digits)']);
       });
     });
+    describe('parse Reference Signal with New Data', function() {
+
+      it('parse new data for reference signal', function() {
+        var data = fs.readFileSync(__dirname + '/data/20160713@133.asc', 'utf8');
+        assert.equal(true, ps.init(data));
+      });
+      
+      it('parse reference signal', function() {
+        var rs = ps.getReferenceSignal();
+        var k = Object.keys(rs);
+        assert.strictEqual(9, k.length);
+        assert.strictEqual('Measurement Species', k[0]);
+        assert.strictEqual('Reference Signal INTENSITY (cps)', k[1]);
+        assert.strictEqual('DSP2-X shift (digits)', k[4]);
+        assert.strictEqual('Detector', k[5]);
+        assert.strictEqual('Offset (v)', k[8]);
+        assert.strictEqual('12C12C 1H', rs['Measurement Species']);
+        assert.strictEqual(1.490648E+8 , rs['Reference Signal INTENSITY (cps)']);
+        assert.strictEqual('12C 13C  /C', rs['Reference species']);
+        assert.strictEqual(4.96, rs['Measurement time (s)']);
+        assert.strictEqual('C', rs.Detector);
+      });
+    });
   });
 
 

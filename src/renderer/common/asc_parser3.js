@@ -34,7 +34,10 @@ module.exports = function() {
       offset: opt.offset === undefined ?  2 : opt.offset,
       length: opt.length    === undefined ? 30 : opt.length
     };
-    var myIndex = keys.indexOf(keyword) + opt.offset;
+    var keyPos = keys.indexOf(keyword);
+    if (keyPos < 0) return false;
+
+    var myIndex = keyPos + opt.offset;
     var out = {}, r = '';
     for (var i = myIndex; i < myIndex + opt.length; i++) {
       r = lines[i][0];
@@ -173,6 +176,18 @@ module.exports = function() {
   my.getEMHVData = function() {
     var opt = {offset: 2, length: 10};
     return my.getListedContents('EM HV DATA', opt);
+  };
+
+  my.getReferenceSignal = function() {
+    var out = {};
+    var opt = {offset: 2, length: 10};
+    var keyPos = keys.indexOf('REFERENCE SIGNAL');
+    if (keyPos < 0) return false;
+    out['Measurement Species'] = lines[keyPos][1].toUpperCase();
+    Object.assign(out, my.getListedContents('REFERENCE SIGNAL', opt));
+    Object.assign(out, my.getListedContents('DSP2-X shift (digits)', opt));
+    
+    return out;
   };
 
   my.getBeamCenteringResults = function() {
@@ -322,6 +337,7 @@ module.exports = function() {
       cummRes: my.getCummulatedResults(),
       priaryBeam: my.getPrimaryBeamIntensity(),
       emhv: my.getEMHVData(),
+      referenceSignal: my.getReferenceSignal(),
       beamcentering: my.getBeamCenteringResults()
     };
   };

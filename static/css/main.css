@@ -205,15 +205,13 @@ body {
 }
 
 .asc-file:hover {
-	border-bottom: 1px solid #b5cce3;
-	border-top: 1px solid #b5cce3;
+	border-bottom: 1px solid #487AB0;
+	border-top: 1px solid #487AB0;
 	margin: -1px 0 0 0;
 	padding-left: 10px;
 	padding-right: 5px;
-	background: #b5cce3;
-	color: #2f71a9;
+	background: #4F87C2;
 	cursor: pointer;
-	box-shadow: 0 6px 10px -7px black;
 	z-index: 30;
 }
 .asc-file:active {
@@ -237,7 +235,7 @@ body {
 	margin: 0;
 }
 .asc-file:hover > .asc-file-name {
-	color: #f8f8f8;
+	color: #f0f0f0;
 }
 .asc-file.current > .asc-file-name {
 	color: #aaa;

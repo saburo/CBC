@@ -695,6 +695,11 @@ $('.remove-icon').on('click', function() {
     resetSearchBox();
 });
 
+$(document).on('keyup', function(e) {
+    if (e.which === 74) moveNext();
+    if (e.which === 75) movePrev();
+});
+
 //--- Modals
 // excel select modal
 $('#select-excel-file').on('click', function() {

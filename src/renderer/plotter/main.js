@@ -467,7 +467,7 @@ var saveAsPDF = function () {
                 averages: plotConfig.averages,
                 printFlag: true,
                 maskedData: mask,
-                margin: {top: 60, right: 20, bottom: 35, left: 70},
+                margin: {top: 60, right: 30, bottom: 50, left: 70},
             }
         };
         updateSaveProgress();

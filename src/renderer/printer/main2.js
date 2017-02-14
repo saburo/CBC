@@ -16,7 +16,7 @@ ipcRenderer.on('async-reply-getPrintPDFArgs', function(e, args) {
         p = '',
         lastFname = args.Files[args.Files.length-1].name;
 
-    var adjust = 1.22,
+    var adjust = 1.325,
     // var adjust = 0.80,
         dpi = 72,
         scale = dpi * adjust,

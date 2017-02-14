@@ -54,6 +54,10 @@ ipcRenderer.on('move-next', function() {
 ipcRenderer.on('move-prev', function() {
     movePrev();
 });
+ipcRenderer.on('focus-search', function() {
+    $('#search-word').focus();
+});
+
 
 
 /**** Functions ****/

@@ -61,6 +61,14 @@ var template = [
         accelerator: 'CmdOrCtrl+A',
         role: 'selectall'
       },
+      {
+        label: 'Find',
+        accelerator: 'CmdOrCtrl+F',
+        click: function(item, focusedWindow) {
+          if (focusedWindow)
+            focusedWindow.webContents.send('focus-search');
+        }
+      },
     ]
   },
   {
@@ -77,10 +85,7 @@ var template = [
       {
         label: 'Toggle Full Screen',
         accelerator: (function() {
-          if (process.platform == 'darwin')
-            return 'Ctrl+Command+F';
-          else
-            return 'F11';
+          return process.platform == 'darwin' ? 'Ctrl+Command+F' : 'F11';
         })(),
         click: function(item, focusedWindow) {
           if (focusedWindow)
@@ -90,10 +95,7 @@ var template = [
       {
         label: 'Toggle Developer Tools',
         accelerator: (function() {
-          if (process.platform == 'darwin')
-            return 'Alt+Command+I';
-          else
-            return 'Ctrl+Shift+I';
+          return process.platform == 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I';
         })(),
         click: function(item, focusedWindow) {
           if (focusedWindow)
@@ -103,10 +105,7 @@ var template = [
       {
         label: 'Move Next Data',
         accelerator: (function() {
-          if (process.platform == 'darwin')
-            return 'Shift+down';
-          else
-            return 'Ctrl+Shift+I';
+          return process.platform == 'darwin' ? 'Shift+down' : 'Ctrl+Shift+I';
         })(),
         click: function(item, focusedWindow) {
           if (focusedWindow)
@@ -116,10 +115,7 @@ var template = [
       {
         label: 'Move Previous Data',
         accelerator: (function() {
-          if (process.platform == 'darwin')
-            return 'Shift+up';
-          else
-            return 'Ctrl+Shift+I';
+          return process.platform == 'darwin' ? 'Shift+up' : 'Ctrl+Shift+I';
         })(),
         click: function(item, focusedWindow) {
           if (focusedWindow)

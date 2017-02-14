@@ -18,7 +18,7 @@ packager({
     // platform: 'darwin,win32',
     platform: platform,
     arch: 'x64',
-    version: '1.4.4',
+    version: '1.6.0',
     // version: '0.34.1',
     // version: '0.30.0',
     icon: './resources/icon', // app icon

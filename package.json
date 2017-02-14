@@ -6,14 +6,13 @@
     "electron": "^1.6.0",
     "electron-packager": "^5.2.1",
     "mocha": "^2.3.4",
-    "rcedit": "^0.7.0",
-    "wine": "0.0.2"
+    "rcedit": "^0.7.0"
   },
   "dependencies": {
     "bootstrap": "^3.3.5",
     "d3": "^3.5.6",
     "jquery": "^2.1.4",
-    "jquery-ui": "^1.10.5",
+    "jquery-ui": "1.10.5",
     "urlsafe-base64": "^1.0.0",
     "xlsx-browerify-shim": "0.0.2"
   },

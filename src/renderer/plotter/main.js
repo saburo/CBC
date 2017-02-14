@@ -701,6 +701,7 @@ $('#search-word').on('focus', function() {
 });
 
 $('#search-word').on('blur', function() {
+    if ($('#search-word').val().trim() !== '') return;
     $('.search-box, .hit-numbers').removeClass('active');
 });
 

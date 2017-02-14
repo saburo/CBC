@@ -25,11 +25,12 @@ module.exports = function () {
 		PDB = 0.0112372,
 		VSMOW = 0.00200520,
 		// VSMOW17 = 0.000379939, // wikipedia (VSMOW)
-		VSMOW17 = 0.00038300,  // back calc from .asc data
+		VSMOW17 = 0.00038300,  // back calc from .asc data (Noriko's value)
 		CDT   = 1 / 22.6436,
 		CDT33 = 1 / 126.948,
-		CDT36 = 1 / 6641;  // Taka's value
+		CDT36 = 1 / 6641,  // Taka's value
 		// CDT36 = 1 / 6515;  // CDT
+		AIR = 0.0036765; // 15N/14N(air) nitrogen isotopes
 
 	function my() {}
 
@@ -605,6 +606,7 @@ module.exports = function () {
 				var deno3 = data.cps[config.deltaRatio3[1]];
 			}
 		}
+
 		for (i=0; i<l; i++) { // cycle loop
 			cycleData = {cycle: (i + 1)}; // init + add cycle key
 			cycleData.cps = {};
@@ -1191,6 +1193,40 @@ module.exports = function () {
 				delta: '[\u2030]',
 				delta2: '[\u2030]',
 				capDelta: '[\u2030]',
+			};
+
+		} else if (data.isoSys === 'CN') {
+			// CN (carbon and nitrogen isotopes)
+			// [0: 12C12C, 1: 12C13C, 2: 12C14N, 3: 12C15N]
+			Scale = PDB * 2;
+			Scale2 = AIR;
+
+			dRatio = ['12C 13C', '12C 12C']; // [numerator, denominator], ratio for delta
+			dRatio2 = ['12C 15N', '12C 14N']; // [numerator, denominator], ratio for delta
+
+			hRatio = dRatio; // no hydride signal
+
+			color = {
+				cps: {
+					'12C 12C': 'red',
+					'12C 13C': 'blue',
+					'12C 14N': 'green',
+					'12C 15N': 'orange',
+				},
+				hydride: '#24557F',
+				delta: 'magenta',
+				delta2: '#3362CE',
+			};
+			label = { // for y axes and legends
+					cps: 'cps',
+					hydride: formatLabels('--'),
+					delta: formatLabels('d13C'),
+					delta2: formatLabels('d15N'),
+			};
+			suffix = { // units and etc...
+				hydride: '',
+				delta: '[\u2030]',
+				delta2: '[\u2030]',
 			};
 		}
 

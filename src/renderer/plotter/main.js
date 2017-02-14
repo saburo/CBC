@@ -35,6 +35,7 @@ var searchBase = [];
 var configStates = {};
 var excelMultiFlag = [];
 var allData = [];
+var mainIsoSys = '';
 
 
 
@@ -608,6 +609,7 @@ var adjustItemPosition = function(item) {
 };
 
 var moveNext = function() {
+    var j = 0;
     var list = $('.asc-file'),
         l = list.length, i = 0;
     if ($('.current').length === 0) {
@@ -617,22 +619,29 @@ var moveNext = function() {
     for (i=0;i<l;i++) {
         var li = $(list[i]);
         if (li.hasClass('current')) {
-            if (i === l-1) return;
-            adjustItemPosition($(list[i+1]).click());
+            for (j=i+1; j<l; j++) {
+                if (!$(list[j]).hasClass('hide')) break;
+            }
+            if (j === l) return; // last item
+            adjustItemPosition($(list[j]).click());
             return;
         }
     }
 };
 
 var movePrev = function() {
+    var j = 0
     var list = $('.asc-file'),
     l = list.length, i = 0;
 
     for (i=0;i<l;i++) {
         var li = $(list[i]);
         if (li.hasClass('current')) {
-            if (i === 0) return;
-            adjustItemPosition($(list[i-1]).click());
+            for (j=i-1; j>=0; j--) {
+                if (!$(list[j]).hasClass('hide')) break;
+            }
+            if (j < 0) return;
+            adjustItemPosition($(list[j]).click());
             return;
         }
     }

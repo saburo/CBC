@@ -1,6 +1,9 @@
 {
   "name": "CBC",
   "version": "0.1.4",
+  "author": "Kouki Kitajima <saburo326@gmail.com>",
+  "license": "MIT",
+  "description": "cycle-by-cycle plotter for isotope analysis by SIMS",
   "main": "./src/browser/main.js",
   "devDependencies": {
     "electron": "^1.6.0",

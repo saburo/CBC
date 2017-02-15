@@ -245,63 +245,44 @@ module.exports = function () {
 		var out = plottypes.filter(function(v, i) {
 			if (v==='cps') return true;
 			if (v==='hydride' && /H$/.test(data.isoSys)) return true;
-			if (/^d/i.test(v)) return true;
+			if (/delta$/i.test(v)) return true;
 			return false;
 		});
 		return out;
 	};
 
 	my.checkMultiDelta = function() {
-		if (config.deltaScale2 && plottypes.indexOf('delta2') < 0) {
-			var hydrideIndex = plottypes.indexOf('hydride');
-			if (hydrideIndex > -1) {
-				plottypes.splice(hydrideIndex, 1);
-			}
-			var deltaPos = plottypes.indexOf('delta');
-			if (deltaPos > -1) {
+		var deltaPos = plottypes.indexOf('delta');
+		if (deltaPos > -1) {
+			if (config.deltaScale2 && plottypes.indexOf('delta2') < 0) {
 				plottypes.splice(deltaPos + 1, 0, 'delta2');
 				var averageDeltaPos = averages.indexOf('delta');
 				if (averageDeltaPos > -1) {
 					averages.splice(averageDeltaPos + 1, 0, 'delta2');
 				}
 			}
-		}
-		if (config.deltaScale3 && plottypes.indexOf('delta3') < 0) {
-			var deltaPos = plottypes.indexOf('delta2');
-			if (deltaPos > -1) {
-				plottypes.splice(deltaPos + 1, 0, 'delta3');
-				var averageDeltaPos = averages.indexOf('delta2');
-				if (averageDeltaPos > -1) {
-					averages.splice(averageDeltaPos + 1, 0, 'delta3');
+			if (config.deltaScale3 && plottypes.indexOf('delta3') < 0) {
+				var deltaPos2 = plottypes.indexOf('delta2');
+				if (deltaPos2 > -1) {
+					plottypes.splice(deltaPos2 + 1, 0, 'delta3');
+					var averageDeltaPos = averages.indexOf('delta2');
+					if (averageDeltaPos > -1) {
+						averages.splice(averageDeltaPos + 1, 0, 'delta3');
+					}
 				}
 			}
 		}
-		if (config.capDelta && plottypes.indexOf('capDelta') < 0) {
-			var deltaPos = plottypes.indexOf('delta3');
-			if (deltaPos == -1) {
-				deltaPos = plottypes.indexOf('delta2');
-			}
-			if (deltaPos > -1) {
-				plottypes.splice(deltaPos + 1, 0, 'capDelta');
-				var averageDeltaPos = averages.indexOf('delta3');
-				if (averageDeltaPos == -1) {
-					averageDeltaPos = averages.indexOf('delta2');
-				}
-				if (averageDeltaPos > -1) {
-					averages.splice(averageDeltaPos + 1, 0, 'capDelta');
-				}
-			}
-		}
-		if (config.capDelta2 && plottypes.indexOf('capDelta2') < 0) {
-			var deltaPos = plottypes.indexOf('capDelta');
-			if (deltaPos > -1) {
-				plottypes.splice(deltaPos + 1, 0, 'capDelta2');
+		var capDeltaPos = plottypes.indexOf('capDelta');
+		if (capDeltaPos > -1) {
+			if (config.capDelta2 && plottypes.indexOf('capDelta2') < 0) {
+				plottypes.splice(capDeltaPos + 1, 0, 'capDelta2');
 				var averageDeltaPos = averages.indexOf('capDelta');
 				if (averageDeltaPos > -1) {
 					averages.splice(averageDeltaPos + 1, 0, 'capDelta2');
 				}
 			}
 		}
+
 	};
 
 	// ===========================================================================

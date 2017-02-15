@@ -67,8 +67,8 @@ ipcRenderer.on('focus-search', function() {
 // };
 
 var updateFileList = function(myDir, myExcel, cb) {
-    $('#asc-list').html('<li class="asc-file">Loading...</li>');
     fs.readdir(myDir, function(err, list) {
+        $('#asc-list').html('<li class="asc-file">Loading...</li>');
         var ExcelCommentFlag = 1,
             myListItems = [],
             ascList = getASCList(list),
@@ -109,7 +109,7 @@ var updateFileList = function(myDir, myExcel, cb) {
             content.push($('<p/>').addClass('asc-file-name').text(ascList[i] + ': ' + tmp.anaParams['Sec.Anal.pressure (mb)'] + " [" + tmp.isoSys + "]"));
             content.push($('<p/>').addClass('asc-file-comment-origin').append(CommOrigin));
             item = $('<li/>').addClass('asc-file')
-                             .attr({'data-asc': ascList[i], 'data-comment': Comm });
+                             .attr({'data-asc': ascList[i], 'data-comment': Comm, 'data-isosys': tmp.isoSys});
             searchBase.push(ascList[i] + ' ' + Comm);
             item.append(content);
             myListItems.push(item);
@@ -134,6 +134,7 @@ var updateFileList = function(myDir, myExcel, cb) {
             });
         }
         if (cb !== undefined) cb();
+        loadConfig();
     });
 };
 
@@ -257,7 +258,7 @@ var reloadFolderItems = function() {
 ***/
 var getConfig = function(param) {
     var out = [];
-    var checked = $('.' + param + ' input:checked');
+    var checked = $('.' + param + ' input:enabled:checked');
     for (var i=0; i<checked.length; i++) {
         out.push($(checked[i]).val());
     }
@@ -279,19 +280,22 @@ var parseConfig = function() {
 var setConfig = function(param, item, value) {
     value = value || true;
     $('.'+param + ' input[value=' + item + ']').prop('checked', value);
-    if (param==='plottypes' && (item==='hydride' || item==='delta' || item==='cps')) {
+    if (param==='plottypes' && (/(hydride|delta|capDelta|cps)/.test(item))) {
         $('.averages input[value=' + item + ']').prop('disabled', false);
     }
 };
 
 var getConfigs = function() {
+    var isosys = getIsoSys();
+    var tmp = {};
     // set default values;
     var out = {
             titles: ['comment'], plottypes: ['cps','delta'],
             averages: ['cps','delta'],
         };
     try {
-        out = JSON.parse(fs.readFileSync(configPath,'utf8'));
+        tmp = JSON.parse(fs.readFileSync(configPath,'utf8'));
+        if (tmp[isosys] !== undefined) out = tmp[isosys];
     } catch(e) {
         console.log('error: reading preference.json');
     }
@@ -300,6 +304,21 @@ var getConfigs = function() {
 };
 
 var loadConfig = function() {
+    var isosys = getIsoSys();
+    var capitalFlag = /[OS][34]/.test(isosys);
+    var hydrideFlag = /H$/.test(isosys);
+
+    $('input[value=capDelta]').prop('disabled', !capitalFlag);
+    if (!capitalFlag) {
+        $('input[value=capDelta]').prop('checked', false)
+            .parent().addClass('disabled-label');
+    }
+    $('input[value=hydride]').prop('disabled', !hydrideFlag);
+    if (!hydrideFlag) {
+        $('input[value=hydride]').prop('checked', false)
+            .parent().addClass('disabled-label');
+    }
+
     configStates = $('#configModal .modal-body').html();
     $('#configModal input').prop('checked', false);
     $('.averages input').prop('disabled', true);
@@ -309,8 +328,11 @@ var loadConfig = function() {
 };
 
 var saveConfig = function(conf) {
+    var isosys = getIsoSys();
     var confPath = path.join(app.getPath('userData'), 'preferences.json');
-    fs.writeFile(confPath, JSON.stringify(parseConfig()), 'utf8', function(err) {
+    var tmp = JSON.parse(fs.readFileSync(configPath,'utf8'));
+    tmp[isosys] = parseConfig();
+    fs.writeFile(confPath, JSON.stringify(tmp), 'utf8', function(err) {
         if (err) throw err;
         updatePlot();
     });
@@ -322,9 +344,13 @@ var initConfigInputs = function() {
     }).disableSelection();
     $('#configModal .plottypes input').on('change', function() {
         var me = $(this);
-        if ($.inArray(me.val(), ['cps', 'hydride', 'delta'])>-1) {
-            var bool = me.prop('checked') ? false : true;
-            $('.averages input[value='+me.val()+']').prop('disabled', bool);
+        var bool = !me.prop('checked');
+        var ave = $('.averages input[value='+me.val()+']');
+        ave.prop('disabled', bool);
+        if (bool) {
+            ave.parent().addClass('disabled-label');
+        } else {
+            ave.parent().removeClass('disabled-label');
         }
     });
     $('#configModal input').on('change', function() {
@@ -647,6 +673,11 @@ var movePrev = function() {
     }
 };
 
+var getIsoSys = function() {
+    var li = $('.current') ? $('.current') : $('.asc-file').first();
+    return li.attr('data-isosys');
+}
+
 /**** Event Listeners ****/
 //--- toolbar
 $('#exportas').on('click', function() {
@@ -723,18 +754,19 @@ $('#select-excel-file').on('click', function() {
 });
 
 // plot config
-$('.plottypes input').on('click', function() {
-    var me = $(this);
-    if (me.val() === 'hydride' || me.val() === 'delta') {
-        if (me.prop('checked')) {
-            $('.averages input[value='+me.val()+']').prop('disabled', false);
-        } else {
-            $('.averages input[value='+me.val()+']').prop('disabled', true);
-        }
-    }
-});
+// $('.plottypes input').on('click', function() {
+//     var me = $(this);
+//     if (/(hydride|delta|capDelta)/.test(me.val())) {
+//         if (me.prop('checked')) {
+//             $('.averages input[value='+me.val()+']').prop('disabled', false);
+//         } else {
+//             $('.averages input[value='+me.val()+']').prop('disabled', true);
+//         }
+//     }
+// });
 
 $('#preference').on('click', function() {
+    if (!allData.length) return;
     loadConfig();
     $('#configModal').modal('show');
 });

@@ -14,6 +14,10 @@ body {
 	font-family: Helvetica, sans-serif;
 }
 
+label.disabled-label {
+	color: #ccc;
+}
+
 .toolbar {
 	position: relative;
 	top: 0;

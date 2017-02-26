@@ -20,6 +20,12 @@ module.exports = function () {
 		maskedData = [],
 		circleSize = 4,
 		myPlot = {},
+		significantDigit = {
+			'cps':      d3.format('0.3f'),
+			'hydride':  d3.format('0.4f'),
+			'delta':    d3.format('0.3f'),
+			'capDelta': d3.format('0.3f')
+		},
 
 
 		PDB = 0.0112372,
@@ -65,6 +71,15 @@ module.exports = function () {
 		}
 		return my;
 	};
+
+	my.significantDigit = function(plottype, sd) {
+		if (!arguments.length) return significantDigit;
+		if (arguments.length === 1) return significantDigit[plottype];
+		if (typeof sd == "number") {
+			significantDigit[plottype] = d3.format('0.' + sd + 'f');
+		}
+		return my;
+	}
 
 	my.average = function(value) {
 		if (!arguments.length) return averages;
@@ -135,6 +150,7 @@ module.exports = function () {
 	my.updateAverage = function() {
 		var obj, myStat, avLine, avText, l;
 		var aves = '';
+		var sigD;
 		averages.forEach(function(t, i) {
 			if (plottypes.indexOf(t) === -1) return;
 			obj = myPlot[t];
@@ -142,6 +158,7 @@ module.exports = function () {
 			avLine = obj.select('.average-line');
 			avText = d3.select('.average-text.average-text-'+t);
 			l = data.plotData.length;
+			sigD = my.significantDigit(t.replace(/\d$/, ''));
 			if (avLine.empty()) {
 				var yVal;
 				if (t === 'cps') {
@@ -223,7 +240,7 @@ module.exports = function () {
 						});
 					}
 					var myOrder = ' [\u00D710<tspan baseline-shift="super" font-size="60%">' + stat[v].order + '</tspan>]';
-					myTarget.html(': ' + f04(myStat[v].mean) + ' ± ' + f04(myStat[v].se2) + myOrder);
+					myTarget.html(': ' + sigD(myStat[v].mean) + ' ± ' + sigD(myStat[v].se2) + myOrder);
 					li.attr({transform: 'translate(' + xOffset + ',0)'});
 					xOffset += li.node().getBBox().width + 20; // padding-right = 20
 					d3.select('.average-line-'+v.replace(' ','')).transition()
@@ -236,7 +253,7 @@ module.exports = function () {
 				});
 			} else {
 				var suffix = (t==='hydride') ? ' [\u00D710<tspan baseline-shift="super" font-size="60%">' + config.order.hydride + '</tspan>]' : ' [\u2030]';
-				avText.html('Average & 2SE: ' + f03(myStat.mean) + ' ± ' + f03(myStat.se2) + suffix);
+				avText.html('Average & 2SE: ' + sigD(myStat.mean) + ' ± ' + sigD(myStat.se2) + suffix);
 			}
 		});
 	};
@@ -791,6 +808,7 @@ module.exports = function () {
 			t = '',
 			suffix = '',
 			label = '',
+			sigD,
 			padding = 10,
 			xOffset = 48.90625 + padding,
 			cv = svg.select('.current-values'),
@@ -800,6 +818,7 @@ module.exports = function () {
 
 		cv.append('text').text('Cycle# ' + cycle);
 		plottypes.forEach(function(v, i) {
+			sigD = my.significantDigit(v.replace(/\d$/,''));
 			if (v === 'cps') {
 				suffix = ' [cps]';
 				d3.keys(data.cps).forEach(function(vv, ii) {
@@ -813,7 +832,7 @@ module.exports = function () {
 			} else {
 				label = config.labels[v];
 				suffix = (v === 'hydride') ? ' [\u00D710<tspan baseline-shift="super" font-size="60%">' + config.order.hydride + '</tspan>]' : ' [\u2030]';
-				txt = label + ': ' + f03(data.plotData[cycle - 1][v]) + suffix;
+				txt = label + ': ' + sigD(data.plotData[cycle - 1][v]) + suffix;
 				t = cv.append('text').html(txt).attr({
 					x: xOffset,
 					fill: color[v],
@@ -1231,11 +1250,11 @@ module.exports = function () {
 		};
 	};
 
-	var f02 = d3.format('0.2f');
-	var f03 = d3.format('0.3f');
-	var f04 = d3.format('0.4f');
-	var f05 = d3.format('0.5f');
-	var f06 = d3.format('0.6f');
+	// var f02 = d3.format('0.2f');
+	// var f03 = d3.format('0.3f');
+	// var f04 = d3.format('0.4f');
+	// var f05 = d3.format('0.5f');
+	// var f06 = d3.format('0.6f');
 
 
 

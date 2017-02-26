@@ -37,6 +37,9 @@ var excelMultiFlag = [];
 var allData = [];
 var mainIsoSys = '';
 
+var isoConfigPath = path.join(__dirname, '../common/configs');
+
+console.log(app.getPath('userData'));
 
 
 /**** ipcRenderers ****/
@@ -117,10 +120,11 @@ var updateFileList = function(myDir, myExcel, cb) {
         // console.log(allData);
         $('#asc-list').html('').append(myListItems);
         $('.asc-file').on('click', function() {
-            $('.current').removeClass('current');
-            $(this).addClass('current');
-            updatePlot($(this).attr('data-asc'),
-                     $(this).attr('data-comment'), []);
+            handleAscFileClick($(this));
+            // $('.current').removeClass('current');
+            // $(this).addClass('current');
+            // updatePlot($(this).attr('data-asc'),
+            //          $(this).attr('data-comment'), []);
         });
         if (excelMultiFlag.length > 0) {
             var options = [];
@@ -136,6 +140,26 @@ var updateFileList = function(myDir, myExcel, cb) {
         if (cb !== undefined) cb();
         loadConfig();
     });
+};
+
+var handleAscFileClick = function(me) {
+    var isoConfig = getIsoConfig(me.attr('data-isosys'));
+    $('.current').removeClass('current');
+    me.addClass('current');
+    updatePlot(me.attr('data-asc'), me.attr('data-comment'), []);
+};
+
+var getIsoConfig = function(isosys) {
+    var isoConfJson = fs.readFileSync(path.join(isoConfigPath, isosys + '.json') ,'utf8');
+    return JSON.parse(isoConfJson.replace(/[\r\n]+/img, ''));
+};
+
+var getDeltas = function() {
+    return getIsoConfig('deltas');
+};
+
+var getScales = function() {
+    return getIsoConfig('scales');
 };
 
 var getASCList = function(list) {
@@ -372,6 +396,12 @@ var intersect = function(a, b) {
 var updatePlot = function(fileName, comm, mask) {
     var p = '';
     var config = getConfigs();
+    var isoConfig = getIsoConfig(getIsoSys());
+    var sigD = {
+        'delta': isoConfig.delta['decimal-place'],
+        'cps': isoConfig.cps['decimal-place'],
+        'capDelta': isoConfig.capDelta['decimal-place'],
+    }
     // config.averages.push('cps');
     pt.plottype(config.plottypes)
         .average(intersect(config.averages, config.plottypes))
@@ -381,6 +411,9 @@ var updatePlot = function(fileName, comm, mask) {
             if (err) throw err;
             p = ps.parseAsc(data);
             if (comm) pt.comment(comm);
+            if (sigD) Object.keys(sigD).map(function(key, i) {
+                pt.significantDigit(key, sigD[key]);
+            })
             pt.setData(p).maskedData(mask).filename(fileName).draw('#myPlot');
         });
     } else {

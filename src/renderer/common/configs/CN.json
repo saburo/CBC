@@ -1,0 +1,40 @@
+{
+	"default": ["cps", "delta", "delta2"],
+	"deltas": ["d13C2", "d15N"],
+	"cps": {
+		"label": "cps",
+		"species": ["12C 12C", "12C 13C", "12C 14N", "12C 15N"],
+		"speflag": [true, true, true, true],
+		"color"  : ["red", "blue", "green", "cyan"],
+		"average": true,
+		"average-line": true,
+		"decimal-place": 4
+	},
+	"ratio": {
+		"label": "12C 14N/12C 13C",
+		"numerator": "12C 14N",
+		"denominator": "12C 13C",
+		"color": "skeyblue",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 4
+	},
+	"delta": {
+		"label": "d12C [\u2030]",
+		"delta": "d12C2",
+		"scale": "VPDB * 2",
+		"color": "purple",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 3
+	},
+	"delta2": {
+		"label": "d15N [\u2030]",
+		"delta": "d15N",
+		"scale": "AIR",
+		"color": "pink",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 3
+	}
+}

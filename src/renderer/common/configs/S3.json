@@ -1,0 +1,51 @@
+{
+	"default": ["cps", "delta", "delta2", "capDelta"],
+	"deltas": ["d34S", "d33S"],
+	"cps": {
+		"label": "cps",
+		"species": ["32S", "33S", "34S"],
+		"color"  : ["red", "blue", "green"],
+		"average": true,
+		"average-line": true,
+		"decimal-place": 4
+	},
+	"ratio": {
+		"label": "34S/32S",
+		"numerator": "34S",
+		"denominator": "32S",
+		"color": "skyblue",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 4
+	},
+	"delta": {
+		"label": "d34S [\u2030]",
+		"delta": "d34S",
+		"scale": "VCDT",
+		"color": "purple",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 3
+	},
+	"delta2": {
+		"label": "d33S [\u2030]",
+		"delta": "d33S",
+		"scale": "VCDT33",
+		"color": "pink",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 3
+	},
+	"capDelta": {
+		"label": "D33S [\u2030]",
+		"major": "d34S",
+		"major-scale": "VCDT",
+		"minor": "d33S",
+		"minor-scale": "VCDT33",
+		"equation": "MINOR - 1000 * ((MAJOR/1000 + 1) ** 0.515) - 1)",
+		"color": "brickred",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 3
+	}
+}

@@ -1,0 +1,21 @@
+{
+	"O": [
+		{"label": "VSMOW",      "value": 0.00200520},
+		{"label": "VPDB",       "value": 0.00206717},
+		{"label": "VSMOW17",    "value": 0.00037994},
+		{"label": "VSMOW17_NK", "value": 0.00038300}
+	],
+	"C": [
+		{"label": "VPDB", "value": 0.0112372}
+	],
+	"S": [
+		{"label": "VCDT", "value": 0.044162589},
+		{"label": "VCDT33", "value": 0.007877241},
+		{"label": "VCDT36_Ding", "value": 0.000153492},
+		{"label": "VCDT36_Taka", "value": 0.000150579}
+	],
+	"CN": [
+		{"label": "VPDB * 2", "value": 0.0224744},
+		{"label": "AIR", "value": 0.0036765}
+	]
+}

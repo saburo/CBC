@@ -1,0 +1,52 @@
+{
+	"default": ["cps", "delta", "delta2", "capDelta"],
+	"deltas": ["d18O", "d17O"],
+	"cps": {
+		"label": "cps",
+		"species": ["16O", "17O", "18O"],
+		"speflag": [true, true, true],
+		"color"  : ["red", "blue", "green"],
+		"average": true,
+		"average-line": true,
+		"decimal-place": 4
+	},
+	"ratio": {
+		"label": "18O/16O",
+		"numerator": "18O",
+		"denominator": "16O",
+		"color": "skyblue",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 4
+	},
+	"delta": {
+		"label": "d18O [\u2030]",
+		"delta": "d18O",
+		"scale": "VSMOW",
+		"color": "purple",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 3
+	},
+	"delta2": {
+		"label": "d17O [\u2030]",
+		"delta": "d17O",
+		"scale": "VSMOW17_NK",
+		"color": "pink",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 3
+	},
+	"capDelta": {
+		"label": "D17O [\u2030]",
+		"major": "d18O",
+		"major-scale": "VSMOW",
+		"minor": "d17O",
+		"minor-scale": "VSMOW17_NK",
+		"equation": "MINOR - 0.52 * MAJOR",
+		"color": "brickred",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 3
+	}
+}

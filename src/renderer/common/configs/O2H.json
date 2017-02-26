@@ -1,0 +1,31 @@
+{
+	"default": ["cps", "ratio", "delta"],
+	"deltas": ["d18O"],
+	"cps": {
+		"label": "cps",
+		"species": ["16O", "16O 1H", "18O"],
+		"speflag": [true, true, true],
+		"color"  : ["red", "blue", "green"],
+		"average": true,
+		"average-line": true,
+		"decimal-place": 4
+	},
+	"ratio": {
+		"label": "16O1H/16O",
+		"numerator": "16O 1H",
+		"denominator": "16O",
+		"color": "skyblue",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 4
+	},
+	"delta": {
+		"label": "d18O [\u2030]",
+		"delta": "d18O",
+		"scale": "VSMOW",
+		"color": "purple",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 3
+	}
+}

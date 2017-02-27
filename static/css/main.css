@@ -14,8 +14,8 @@ body {
 	font-family: Helvetica, sans-serif;
 }
 
-label.disabled-label {
-	color: #ccc;
+label.disabled {
+	color: #bbb;
 }
 
 .toolbar {

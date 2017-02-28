@@ -74,14 +74,14 @@ var template = [
   {
     label: 'View',
     submenu: [
-      {
-        label: 'Reload',
-        accelerator: 'CmdOrCtrl+R',
-        click: function(item, focusedWindow) {
-          if (focusedWindow)
-            focusedWindow.reload();
-        }
-      },
+      // {
+      //   label: 'Reload',
+      //   accelerator: 'CmdOrCtrl+R',
+      //   click: function(item, focusedWindow) {
+      //     if (focusedWindow)
+      //       focusedWindow.reload();
+      //   }
+      // },
       {
         label: 'Toggle Full Screen',
         accelerator: (function() {
@@ -92,20 +92,21 @@ var template = [
             focusedWindow.setFullScreen(!focusedWindow.isFullScreen());
         }
       },
-      {
-        label: 'Toggle Developer Tools',
-        accelerator: (function() {
-          return process.platform == 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I';
-        })(),
-        click: function(item, focusedWindow) {
-          if (focusedWindow)
-            focusedWindow.toggleDevTools();
-        }
-      },
+      // {
+      //   label: 'Toggle Developer Tools',
+      //   accelerator: (function() {
+      //     return process.platform == 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I';
+      //   })(),
+      //   click: function(item, focusedWindow) {
+      //     if (focusedWindow)
+      //       focusedWindow.toggleDevTools();
+      //   }
+      // },
       {
         label: 'Move Next Data',
         accelerator: (function() {
-          return process.platform == 'darwin' ? 'Shift+down' : 'Ctrl+Shift+I';
+          return 'Shift+down';
+          // return process.platform == 'darwin' ? 'Shift+down' : 'Ctrl+Shift+I';
         })(),
         click: function(item, focusedWindow) {
           if (focusedWindow)
@@ -115,7 +116,8 @@ var template = [
       {
         label: 'Move Previous Data',
         accelerator: (function() {
-          return process.platform == 'darwin' ? 'Shift+up' : 'Ctrl+Shift+I';
+          return 'Shift+up';
+          // return process.platform == 'darwin' ? 'Shift+up' : 'Ctrl+Shift+I';
         })(),
         click: function(item, focusedWindow) {
           if (focusedWindow)

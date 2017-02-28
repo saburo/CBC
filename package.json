@@ -26,7 +26,7 @@
     "release:win": "node release.js win",
     "release:win_noicon": "electron-packager . CBC --platform=win32 --arch=x64 --version=1.4.4 --asar --prune --ignore=\"node_modules/(electron-packager|electron-prebuilt|.bin)|release.js|.DS_Store\" --out=../dist ",
     "pack:osx": "electron-builder \"../dist/CBC-darwin-x64/CBC.app\" --platform=osx --out=\"../installer/osx\" --config=packager.json",
-    "dist": "build -mw --x64 --ia32",
+    "dist": "build -mw --x64",
     "start": "electron .",
     "test": "mocha"
   },

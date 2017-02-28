@@ -261,7 +261,7 @@ module.exports = function () {
 	my.filterPlotTypes = function() {
 		var out = plottypes.filter(function(v, i) {
 			if (v==='cps') return true;
-			if (v==='hydride' && /H$/.test(data.isoSys)) return true;
+			if (v==='hydride' && /(H$|AlMg)/.test(data.isoSys)) return true;
 			if (/delta$/i.test(v)) return true;
 			return false;
 		});
@@ -619,7 +619,11 @@ module.exports = function () {
 					cycleData.delta3 = (nume3[i] / deno3[i] / config.deltaScale3 - 1) * 1000;
 				}
 				if (config.capDelta) {
-					cycleData.capDelta = config.capDelta(cycleData.delta, cycleData.delta2)
+					if (data.isoSys === 'AlMg') {
+						cycleData.capDelta = config.capDelta(cycleData.delta, cycleData.delta3)
+					} else {
+						cycleData.capDelta = config.capDelta(cycleData.delta, cycleData.delta2)
+					}
 					if (config.capDelta2) {
 						cycleData.capDelta2 = config.capDelta2(cycleData.delta, cycleData.delta3)
 					}
@@ -910,7 +914,7 @@ module.exports = function () {
 
 
 	var formatLabels = function(txt) {
-		var pa1 = /(\d+)/g,
+		var pa1 = /(\d+\/\d+|\d)/g,
 				re1 = '<tspan baseline-shift="super" font-size="60%">$1</tspan>',
 				pa2 = /^d/,
 				re2 = '\u03B4',
@@ -1227,6 +1231,51 @@ module.exports = function () {
 				hydride: '',
 				delta: '[\u2030]',
 				delta2: '[\u2030]',
+			};
+		} else if (data.isoSys === 'AlMg') {
+			// Al-Mg (Al-Mg by multi)
+			// [0: 24Mg, 1: 25Mg, 2: 26Mg, 3: 27Al]
+			Scale  = 0.12663;
+			Scale2 = 0.13932;
+			Scale3 = Scale2 / Scale;
+			capDelta = function(d25, d26_25) {
+				var Coef_MS = 0.945525291828794;
+				return (Math.exp(Math.log(d26_25/1000+1)-Math.log(d25/1000+1)*Coef_MS)-1)*1000
+				// return d33 - 1000 * (Math.pow((d34/1000 + 1), 0.515) - 1)
+			};
+			dRatio  = ['25Mg', '24Mg']; // [numerator, denominator], ratio for delta
+			dRatio2 = ['26Mg', '24Mg']; // [numerator, denominator], ratio for delta
+			dRatio3 = ['26Mg', '25Mg']; // [numerator, denominator], ratio for delta
+
+			hRatio = ['27Al', '24Mg'] 
+
+			color = {
+				cps: {
+					'24Mg': 'red',
+					'25Mg': 'blue',
+					'26Mg': 'green',
+					'27Al': 'orange',
+				},
+				hydride: '#24557F',
+				delta:  'magenta',
+				delta2: '#3362CE',
+				delta3: 'pink',
+				capDelta: '#00D636',
+			};
+			label = { // for y axes and legends
+					cps: 'cps',
+					hydride: formatLabels('27Al/24Mg'),
+					delta: formatLabels('d25Mg'),
+					delta2: formatLabels('d26Mg'),
+					delta3: formatLabels('d26/25Mg'),
+					capDelta: formatLabels('D26Mg'),
+			};
+			suffix = { // units and etc...
+				hydride: '',
+				delta: '[\u2030]',
+				delta2: '[\u2030]',
+				delta3: '[\u2030]',
+				capDelta: '[\u2030]',
 			};
 		}
 

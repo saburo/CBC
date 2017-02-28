@@ -39,9 +39,6 @@ var mainIsoSys = '';
 
 var isoConfigPath = path.join(__dirname, '../common/configs');
 
-console.log(app.getPath('userData'));
-
-
 /**** ipcRenderers ****/
 ipcRenderer.on('async-reply-print-done', function(event, status) {
     window.clearInterval(timerId);
@@ -329,8 +326,8 @@ var getConfigs = function() {
 
 var loadConfig = function() {
     var isosys = getIsoSys();
-    var capitalFlag = /[OS][34]/.test(isosys);
-    var hydrideFlag = /H$/.test(isosys);
+    var capitalFlag = /(O3|S3|S4|AlMg)/.test(isosys);
+    var hydrideFlag = /(H$|AlMg)/.test(isosys);
 
     $('input[value=capDelta]').prop('disabled', !capitalFlag);
     if (!capitalFlag) {
@@ -404,7 +401,7 @@ var updatePlot = function(fileName, comm, mask) {
     var sigD = {
         'delta': isoConfig.delta['decimal-place'],
         'cps': isoConfig.cps['decimal-place'],
-        'capDelta': isoConfig.capDelta['decimal-place'],
+        'capDelta': isoConfig.capDelta === undefined ? 0 : isoConfig.capDelta['decimal-place'],
     }
     // config.averages.push('cps');
     pt.plottype(config.plottypes)

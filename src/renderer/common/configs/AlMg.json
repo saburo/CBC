@@ -1,0 +1,73 @@
+{
+	"default": ["cps", "delta", "delta2", "delta3", "capDelta", "capDelta2"],
+	"deltas": ["d34S", "d33S", "d36S"],
+	"cps": {
+		"label": "cps",
+		"species": ["32S", "33S", "34S", "36S"],
+		"speflag": [true, true, true, true],
+		"color"  : ["red", "blue", "green", "cyan"],
+		"average": true,
+		"average-line": true,
+		"decimal-place": 4
+	},
+	"ratio": {
+		"label": "34S/32S",
+		"numerator": "34S",
+		"denominator": "32S",
+		"color": "skyblue",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 4
+	},
+	"delta": {
+		"label": "d34S [\u2030]",
+		"delta": "d34S",
+		"scale": "VCDT",
+		"color": "purple",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 3
+	},
+	"delta2": {
+		"label": "d33S [\u2030]",
+		"delta": "d33S",
+		"scale": "VCDT33",
+		"color": "pink",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 3
+	},
+	"delta3": {
+		"label": "d36S [\u2030]",
+		"delta": "d36S",
+		"scale": "VCDT36_Taka",
+		"color": "darkgreen",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 3
+	},
+	"capDelta": {
+		"label": "D33S [\u2030]",
+		"major": "d34S",
+		"major-scale": "VCDT",
+		"minor": "d33S",
+		"minor-scale": "VCDT33",
+		"equation": "MINOR - 1000 * ((MAJOR/1000 + 1) ** 0.515) - 1)",
+		"color": "#841F27",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 3
+	},
+	"capDelta2": {
+		"label": "D36S [\u2030]",
+		"major": "d34S",
+		"major-scale": "VCDT",
+		"minor": "d36S",
+		"minor-scale": "VCDT36_Taka",
+		"equation": "MINOR - 1000 * ((MAJOR/1000 + 1) ** 1.9) - 1)",
+		"color": "violet",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 3
+	}
+}

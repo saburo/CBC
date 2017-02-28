@@ -241,6 +241,10 @@ module.exports = function() {
       case '12C12C,12C13C,12C14N,12C15N':
         isosys = 'CN';
         break;
+      // Al-Mg
+      case '24Mg,25Mg,26Mg,27Al':
+        isosys = 'AlMg';
+        break;
     }
     return isosys;
   };

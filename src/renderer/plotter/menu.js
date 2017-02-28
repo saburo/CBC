@@ -5,6 +5,60 @@ var remote = require('electron').remote,
     MenuItem = remote.MenuItem,
     app = remote.app;
 
+var viewSubmenu = [
+  {
+    label: 'Toggle Full Screen',
+    accelerator: (function() {
+      return process.platform == 'darwin' ? 'Ctrl+Command+F' : 'F11';
+    })(),
+    click: function(item, focusedWindow) {
+      if (focusedWindow)
+        focusedWindow.setFullScreen(!focusedWindow.isFullScreen());
+    }
+  },
+  {
+    label: 'Next Data',
+    accelerator: (function() {
+      return 'Shift+down';
+    })(),
+    click: function(item, focusedWindow) {
+      if (focusedWindow)
+        focusedWindow.webContents.send('move-next');
+    }
+  },
+  {
+    label: 'Previous Data',
+    accelerator: (function() {
+      return 'Shift+up';
+    })(),
+    click: function(item, focusedWindow) {
+      if (focusedWindow)
+        focusedWindow.webContents.send('move-prev');
+    }
+  },
+];
+
+if (process.env.DEV_ENV === 'development') {
+  viewSubmenu.push({
+    label: 'Reload',
+    accelerator: 'CmdOrCtrl+R',
+    click: function(item, focusedWindow) {
+      if (focusedWindow)
+        focusedWindow.reload();
+    }
+  });
+  viewSubmenu.push({
+    label: 'Toggle Developer Tools',
+    accelerator: (function() {
+      return process.platform == 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I';
+    })(),
+    click: function(item, focusedWindow) {
+      if (focusedWindow)
+        focusedWindow.toggleDevTools();
+    }
+  });
+}
+
 var template = [
     {
         label: 'File',
@@ -73,58 +127,7 @@ var template = [
   },
   {
     label: 'View',
-    submenu: [
-      {
-        label: 'Reload',
-        accelerator: 'CmdOrCtrl+R',
-        click: function(item, focusedWindow) {
-          if (focusedWindow)
-            focusedWindow.reload();
-        }
-      },
-      {
-        label: 'Toggle Full Screen',
-        accelerator: (function() {
-          return process.platform == 'darwin' ? 'Ctrl+Command+F' : 'F11';
-        })(),
-        click: function(item, focusedWindow) {
-          if (focusedWindow)
-            focusedWindow.setFullScreen(!focusedWindow.isFullScreen());
-        }
-      },
-      {
-        label: 'Toggle Developer Tools',
-        accelerator: (function() {
-          return process.platform == 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I';
-        })(),
-        click: function(item, focusedWindow) {
-          if (focusedWindow)
-            focusedWindow.toggleDevTools();
-        }
-      },
-      {
-        label: 'Move Next Data',
-        accelerator: (function() {
-          return 'Shift+down';
-          // return process.platform == 'darwin' ? 'Shift+down' : 'Ctrl+Shift+I';
-        })(),
-        click: function(item, focusedWindow) {
-          if (focusedWindow)
-            focusedWindow.webContents.send('move-next');
-        }
-      },
-      {
-        label: 'Move Previous Data',
-        accelerator: (function() {
-          return 'Shift+up';
-          // return process.platform == 'darwin' ? 'Shift+up' : 'Ctrl+Shift+I';
-        })(),
-        click: function(item, focusedWindow) {
-          if (focusedWindow)
-            focusedWindow.webContents.send('move-prev');
-        }
-      },
-    ]
+    submenu: viewSubmenu
   },
   {
     label: 'Window',

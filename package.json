@@ -28,6 +28,7 @@
     "pack:osx": "electron-builder \"../dist/CBC-darwin-x64/CBC.app\" --platform=osx --out=\"../installer/osx\" --config=packager.json",
     "dist": "build -mw --x64",
     "start": "electron .",
+    "dev": "DEV_ENV=development electron .",
     "test": "mocha"
   },
   "build": {

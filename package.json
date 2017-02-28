@@ -1,12 +1,13 @@
 {
   "name": "CBC",
-  "version": "0.1.4",
+  "version": "1.0",
   "author": "Kouki Kitajima <saburo326@gmail.com>",
   "license": "MIT",
   "description": "cycle-by-cycle plotter for isotope analysis by SIMS",
   "main": "./src/browser/main.js",
   "devDependencies": {
     "electron": "^1.6.0",
+    "electron-builder": "^14.5.1",
     "electron-packager": "^5.2.1",
     "mocha": "^2.3.4",
     "rcedit": "^0.7.0"
@@ -24,7 +25,19 @@
     "release:mac": "node release.js mac",
     "release:win": "node release.js win",
     "release:win_noicon": "electron-packager . CBC --platform=win32 --arch=x64 --version=1.4.4 --asar --prune --ignore=\"node_modules/(electron-packager|electron-prebuilt|.bin)|release.js|.DS_Store\" --out=../dist ",
+    "pack:osx": "electron-builder \"../dist/CBC-darwin-x64/CBC.app\" --platform=osx --out=\"../installer/osx\" --config=packager.json",
+    "dist": "build -mw --x64",
     "start": "electron .",
     "test": "mocha"
+  },
+  "build": {
+    "appId": "edu.wiscsims.cbc",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "resources/icon.icns"
+    },
+    "win": {
+      "icon": "resources/icon.ico"
+    }
   }
 }

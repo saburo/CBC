@@ -335,12 +335,16 @@ var loadConfig = function() {
     $('input[value=capDelta]').prop('disabled', !capitalFlag);
     if (!capitalFlag) {
         $('input[value=capDelta]').prop('checked', false)
-            .parent().addClass('disabled-label');
+            .parent().addClass('disabled');
+    } else {
+        $('input[value=capDelta]').parent().removeClass('disabled');
     }
     $('input[value=hydride]').prop('disabled', !hydrideFlag);
     if (!hydrideFlag) {
         $('input[value=hydride]').prop('checked', false)
-            .parent().addClass('disabled-label');
+            .parent().addClass('disabled');
+    } else {
+        $('input[value=hydride]').parent().removeClass('disabled');
     }
 
     configStates = $('#configModal .modal-body').html();
@@ -372,9 +376,9 @@ var initConfigInputs = function() {
         var ave = $('.averages input[value='+me.val()+']');
         ave.prop('disabled', bool);
         if (bool) {
-            ave.parent().addClass('disabled-label');
+            ave.parent().addClass('disabled');
         } else {
-            ave.parent().removeClass('disabled-label');
+            ave.parent().removeClass('disabled');
         }
     });
     $('#configModal input').on('change', function() {

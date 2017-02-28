@@ -358,6 +358,13 @@ describe('ASC parser', function(){
         var pa = ps.parseAll();
         assert.strictEqual('CN', pa.isoSys);
       });
+
+      it('Al-Mg multi', function() {
+        var data = fs.readFileSync(__dirname + '/data/20140707@11.asc', 'utf8');
+        assert.equal(true, ps.init(data));
+        var pa = ps.parseAll();
+        assert.strictEqual('AlMg', pa.isoSys);
+      });
   });
 
 });

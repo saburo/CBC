@@ -6,6 +6,7 @@
   "description": "cycle-by-cycle plotter for isotope analysis by SIMS",
   "main": "./src/browser/main.js",
   "devDependencies": {
+    "devtron": "^1.4.0",
     "electron": "^1.6.0",
     "electron-builder": "^14.5.1",
     "electron-packager": "^5.2.1",
@@ -42,7 +43,7 @@
       "icon": "resources/icon.ico"
     },
     "dmg": {
-      "iconSize": 150 
+      "iconSize": 150
     }
   }
 }

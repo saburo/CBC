@@ -1,0 +1,31 @@
+{
+	"default": ["cps", "ratio", "delta"],
+	"deltas": ["d34S"],
+	"cps": {
+		"label": "cps",
+		"species": ["32S", "34S"],
+		"speflag": [true, true],
+		"color"  : ["red", "green"],
+		"average": true,
+		"average-line": true,
+		"decimal-place": 4
+	},
+	"ratio": {
+		"label": "34S/32S",
+		"numerator": "34S",
+		"denominator": "32S",
+		"color": "skyblue",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 4
+	},
+	"delta": {
+		"label": "d34S [\u2030]",
+		"delta": "d34S",
+		"scale": "VCDT",
+		"color": "purple",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 3
+	}
+}

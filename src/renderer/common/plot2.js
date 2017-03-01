@@ -1027,6 +1027,29 @@ module.exports = function () {
 				hydride: '',
 				delta: '[\u2030]'
 			};
+		if (data.isoSys === 'C2') {
+			// C2H (carbon two isotopes without CH)
+			// [0: 12C, 1: 13C]
+				Scale = PDB;
+				dRatio = ['13C', '12C']; // [numerator, denominator], ratio for delta
+				hRatio = ['13C', '12C'];
+				color = {
+					cps: {
+						'12C':    'red',
+						'13C':    'green',
+					},
+					hydride: '#24557F',
+					delta: 'magenta'
+			};
+			label = { // for y axes and legends
+					cps: 'cps',
+					hydride: formatLabels('13C1H/13C'),
+					delta: formatLabels('d13C'),
+			};
+			suffix = { // units and etc...
+				hydride: '',
+				delta: '[\u2030]'
+			};
 
 		// } else if (iso2 === '32S,33S,34S,36S') {
 		} else if (data.isoSys === 'S4') {

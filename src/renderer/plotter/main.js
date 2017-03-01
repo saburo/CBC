@@ -261,16 +261,20 @@ var getComment = function(filename) {
 };
 
 var reloadFolderItems = function() {
-  var current = $('.current');
-  updateFileList(myPath, myExcelFile, function() {
-    var list = $('.asc-file');
-    for(var i=0; i<list.length; i++) {
-      if ($(list[i]).attr('data-asc') !== current.attr('data-asc')) continue;
-      adjustItemPosition($(list[i]).addClass('current'));
-      return;
-    }
-    $('svg').html('');
-  });
+    var icon = $('.refresh-icon');
+    var current = $('.current');
+    icon.addClass('fa-spin');
+    updateFileList(myPath, myExcelFile, function() {
+        var list = $('.asc-file');
+        for(var i=0; i<list.length; i++) {
+            if ($(list[i]).attr('data-asc') !== current.attr('data-asc')) continue;
+            adjustItemPosition($(list[i]).addClass('current'));
+            icon.removeClass('fa-spin');
+            return;
+        }
+        $('svg').html('');
+        icon.removeClass('fa-spin');
+    });
 };
 
 

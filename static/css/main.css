@@ -131,6 +131,7 @@ label.disabled {
 }
 
 .refresh-icon {
+	position: absolute;
 	top: 8px;
   right: 2px;
 }

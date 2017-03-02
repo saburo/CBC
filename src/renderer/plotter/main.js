@@ -11,12 +11,29 @@ global.browserWindow = remote;
 require('./menu');
 
 var XLS = require('xlsx-browerify-shim');
+
+const Config = require('electron-config');
+const config = new Config({
+    defaults: {
+        default: {
+            titles: ['comment', 'filename'],
+            plottypes: ['cps','delta'],
+            averages: ['cps','delta'],
+        }
+    }
+});
+
 global.$ = require('jquery');
 global.jQuery = global.$;
 
 global.myDebug = null;
 
 require('jquery-ui');
+
+
+console.log(config.path);
+console.log('config', config.store);
+
 
 
 var bootstrap = require('bootstrap');
@@ -297,8 +314,6 @@ var parseConfig = function() {
     params.forEach(function(v, i) {
         out[v] = getConfig(v);
     });
-    // out['papersize'] = $('#paperSize > option:selected').val();
-    // out['paperorientation'] = $('.paper-orientation > input:checked').val();
 
     return out;
 };
@@ -313,23 +328,7 @@ var setConfig = function(param, item, value) {
 
 var getConfigs = function() {
     var isosys = getIsoSys();
-    var tmp = {};
-    // set default values;
-    var out = {};
-    var defaults = {
-        titles: ['comment', 'filename'],
-        plottypes: ['cps','delta'],
-        averages: ['cps','delta'],
-    };
-    try {
-        out = JSON.parse(fs.readFileSync(configPath,'utf8'));
-        // if (tmp[isosys] !== undefined) out = tmp[isosys];
-    } catch(e) {
-        out[isosys] = defaults;
-        console.log('error: reading ' + configPath);
-    }
-
-    return out[isosys];
+    return config.has(isosys) ? config.get(isosys) : config.get('default');
 };
 
 var loadConfig = function() {
@@ -360,14 +359,9 @@ var loadConfig = function() {
     });
 };
 
-var saveConfig = function(conf) {
-    var isosys = getIsoSys();
-    var tmp = getConfigs();
-    tmp[isosys] = parseConfig();
-    fs.writeFile(configPath, JSON.stringify(tmp), 'utf8', function(err) {
-        if (err) throw err;
-        updatePlot();
-    });
+var saveConfigs = function(conf) {
+    config.set(getIsoSys(), parseConfig());
+    updatePlot();
 };
 
 var initConfigInputs = function() {
@@ -813,7 +807,7 @@ $('#preference').on('click', function() {
 });
 
 $('#save-config-btn').on('click', function() {
-    saveConfig();
+    saveConfigs();
     $('#configModal').modal('hide');
     configStates = '';
     $(this).blur();

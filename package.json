@@ -1,6 +1,6 @@
 {
   "name": "CBC",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": "Kouki Kitajima <saburo@geology.wisc.edu>",
   "license": "MIT",
   "description": "cycle-by-cycle plotter for isotope analysis by SIMS",

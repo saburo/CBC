@@ -6,6 +6,7 @@
 		{"label": "VSMOW17_NK", "value": 0.00038300}
 	],
 	"C": [
+		{"label": "PDB", "value": 0.0112372},
 		{"label": "VPDB", "value": 0.0112372}
 	],
 	"S": [
@@ -17,5 +18,10 @@
 	"CN": [
 		{"label": "VPDB * 2", "value": 0.0224744},
 		{"label": "AIR", "value": 0.0036765}
+	],
+	"AlMg": [
+		{"label": "Mg25", "value": 0.12663},
+		{"label": "Mg26", "value": 0.13932},
+		{"label": "Mg2625", "value": 1.10021322}
 	]
 }

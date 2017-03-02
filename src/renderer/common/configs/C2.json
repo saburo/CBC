@@ -1,0 +1,31 @@
+{
+	"default": ["cps", "ratio", "delta"],
+	"deltas": ["d13C"],
+	"cps": {
+		"label": "cps",
+		"species": ["12C", "13C"],
+		"speflag": [true, true],
+		"color"  : ["red", "blue"],
+		"average": true,
+		"average-line": true,
+		"decimal-place": 4
+	},
+	"ratio": {
+		"label": "13C/12C",
+		"numerator": "13C",
+		"denominator": "12C",
+		"color": "skyblue",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 4
+	},
+	"delta": {
+		"label": "d13C [\u2030]",
+		"delta": "d13C",
+		"scale": "VPDB",
+		"color": "purple",
+		"average": true,
+		"average-line": true,
+		"decimal-place": 3
+	}
+}

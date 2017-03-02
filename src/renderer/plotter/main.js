@@ -26,11 +26,12 @@ var ps = require('../common/asc_parser3');
     // pt = require('../common/plot');
 var pt = require('../common/plot2');
 
+var configFileName = 'edu.wiscsims.cbc.json';
 var defWinSize = remote.getGlobal('defaultWindowSize');
 var defaultDir = "";
 var myPath = '';
 var myExcelFile;
-var configPath = path.join(app.getPath('userData'), 'preferences.json');
+var configPath = path.join(app.getPath('userData'), configFileName);
 var searchBase = [];
 var configStates = {};
 var excelMultiFlag = [];
@@ -358,7 +359,7 @@ var loadConfig = function() {
 
 var saveConfig = function(conf) {
     var isosys = getIsoSys();
-    var confPath = path.join(app.getPath('userData'), 'preferences.json');
+    // var confPath = path.join(app.getPath('userData'), 'preferences.json');
     var tmp = JSON.parse(fs.readFileSync(configPath,'utf8'));
     tmp[isosys] = parseConfig();
     fs.writeFile(confPath, JSON.stringify(tmp), 'utf8', function(err) {

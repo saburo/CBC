@@ -1027,7 +1027,7 @@ module.exports = function () {
 				hydride: '',
 				delta: '[\u2030]'
 			};
-		if (data.isoSys === 'C2') {
+		} else if (data.isoSys === 'C2') {
 			// C2H (carbon two isotopes without CH)
 			// [0: 12C, 1: 13C]
 				Scale = PDB;
@@ -1270,7 +1270,7 @@ module.exports = function () {
 			dRatio2 = ['26Mg', '24Mg']; // [numerator, denominator], ratio for delta
 			dRatio3 = ['26Mg', '25Mg']; // [numerator, denominator], ratio for delta
 
-			hRatio = ['27Al', '24Mg'] 
+			hRatio = ['27Al', '24Mg'];
 
 			color = {
 				cps: {

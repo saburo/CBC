@@ -359,7 +359,7 @@ var loadConfig = function() {
     });
 };
 
-var saveConfigs = function(conf) {
+var saveConfigs = function() {
     config.set(getIsoSys(), parseConfig());
     updatePlot();
 };

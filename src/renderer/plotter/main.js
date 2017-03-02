@@ -315,18 +315,21 @@ var getConfigs = function() {
     var isosys = getIsoSys();
     var tmp = {};
     // set default values;
-    var out = {
-            titles: ['comment'], plottypes: ['cps','delta'],
-            averages: ['cps','delta'],
-        };
+    var out = {};
+    var defaults = {
+        titles: ['comment', 'filename'],
+        plottypes: ['cps','delta'],
+        averages: ['cps','delta'],
+    };
     try {
-        tmp = JSON.parse(fs.readFileSync(configPath,'utf8'));
-        if (tmp[isosys] !== undefined) out = tmp[isosys];
+        out = JSON.parse(fs.readFileSync(configPath,'utf8'));
+        // if (tmp[isosys] !== undefined) out = tmp[isosys];
     } catch(e) {
-        console.log('error: reading preference.json');
+        out[isosys] = defaults;
+        console.log('error: reading ' + configPath);
     }
 
-    return out;
+    return out[isosys];
 };
 
 var loadConfig = function() {
@@ -359,10 +362,9 @@ var loadConfig = function() {
 
 var saveConfig = function(conf) {
     var isosys = getIsoSys();
-    // var confPath = path.join(app.getPath('userData'), 'preferences.json');
-    var tmp = JSON.parse(fs.readFileSync(configPath,'utf8'));
+    var tmp = getConfigs();
     tmp[isosys] = parseConfig();
-    fs.writeFile(confPath, JSON.stringify(tmp), 'utf8', function(err) {
+    fs.writeFile(configPath, JSON.stringify(tmp), 'utf8', function(err) {
         if (err) throw err;
         updatePlot();
     });

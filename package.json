@@ -1,7 +1,7 @@
 {
   "name": "CBC",
   "version": "1.1.0",
-  "author": "Kouki Kitajima <saburo326@gmail.com>",
+  "author": "Kouki Kitajima <saburo@geology.wisc.edu>",
   "license": "MIT",
   "description": "cycle-by-cycle plotter for isotope analysis by SIMS",
   "main": "./src/browser/main.js",
@@ -28,7 +28,7 @@
     "pack:osx": "electron-builder \"../dist/CBC-darwin-x64/CBC.app\" --platform=osx --out=\"../installer/osx\" --config=packager.json",
     "dist": "build -mw",
     "start": "electron .",
-    "dev": "DEV_ENV=development electron .",
+    "dev": "DEV_ENV=development yarn start",
     "test": "mocha"
   },
   "build": {

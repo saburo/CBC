@@ -315,25 +315,39 @@ var setConfig = function(param, item, value) {
     }
 };
 
-var getConfigs = function() {
-    var isosys = getIsoSys();
+var getConfigs = function(isosys) {
+    // var isosys = getIsoSys();
     var tmp = {};
-    // set default values;
     var out = {};
+    // set default values;
     var defaults = {
         titles: ['comment', 'filename'],
         plottypes: ['cps','delta'],
         averages: ['cps','delta'],
     };
     try {
-        out = JSON.parse(fs.readFileSync(configPath,'utf8'));
+        tmp = JSON.parse(fs.readFileSync(configPath,'utf8'));
         // if (tmp[isosys] !== undefined) out = tmp[isosys];
     } catch(e) {
-        out[isosys] = defaults;
+        // no configure file
         console.log('error: reading ' + configPath);
+        return defaults;
+    }
+    if (isosys) {
+        // specified isotope system
+        if (!tmp.hasOwnProperty(isosys)) {
+            out = defaults;
+        } else {
+            out = tmp[isosys];
+        }
+    } else {
+        // non-specified isotope system
+        // return whole config file
+        if (tmp.hasOwnProperty('titles')) tmp = {};
+        out = tmp;
     }
 
-    return out[isosys];
+    return out;
 };
 
 var loadConfig = function() {
@@ -359,7 +373,7 @@ var loadConfig = function() {
     configStates = $('#configModal .modal-body').html();
     $('#configModal input').prop('checked', false);
     $('.averages input').prop('disabled', true);
-    $.each(getConfigs(), function(key, v) {
+    $.each(getConfigs(isosys), function(key, v) {
         v.map(function(i) { setConfig(key, i); });
     });
 };
@@ -407,8 +421,9 @@ var intersect = function(a, b) {
 
 var updatePlot = function(fileName, comm, mask) {
     var p = '';
-    var config = getConfigs();
-    var isoConfig = getIsoConfig(getIsoSys());
+    var isosys = getIsoSys();
+    var config = getConfigs(isosys);
+    var isoConfig = getIsoConfig(isosys);
     var sigD = {
         'delta': isoConfig.delta['decimal-place'],
         'cps': isoConfig.cps['decimal-place'],
@@ -530,7 +545,7 @@ var saveAsPDF = function () {
                 mask = pt.maskedData();
             }
         }
-        var plotConfig = getConfigs();
+        var plotConfig = getConfigs(getIsoSys());
         var args = {
             dir: myPath,
             Files: files,

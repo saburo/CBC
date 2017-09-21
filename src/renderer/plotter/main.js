@@ -83,7 +83,6 @@ var updateFileList = function(myDir, myExcel, cb) {
             searchBase = [];
         allData = [];
         // console.log('excelComments', excelComments);
-        myDebug = excelComments;
         for (i in ascList) {
             if (ps.init(fs.readFileSync(path.join(myDir, ascList[i]), 'utf8'))) {
                 tmp = ps.parseAll();
@@ -176,7 +175,7 @@ var getASCList = function(list) {
 };
 
 var getExcelCommentList = function(list, excelPath) {
-    var pattern = /\.xls$/;
+    var pattern = /\.xlsx?$/;
     var mySpreadSheet = [];
     var sheetIndex = -1;
     var wb = '';
@@ -190,17 +189,22 @@ var getExcelCommentList = function(list, excelPath) {
         // path = path.join(myPath, mySpreadSheet[0]);
         var comments = {};
         wb = XLS.readFile(sheetPath).Sheets.Sum_table;
-        // console.log('test: %s', /\.asc$/.test(wb['A4'].v))
-        if (wb.hasOwnProperty('A4') && !/\.asc$/.test(wb['A4'].v)) {
+        var ulimit = 0;
+        if (/\.xlsx$/.test(sheetPath)) {
+        // new excel format (.xlsx)
+            ulimit = /(\d+)$/.exec(wb['!ref'])[1] / 1
+        } else {
+        // old excel format (.xls)
+            ulimit = wb['!range'].e.r
+        }
+        if (wb.hasOwnProperty('A8') && !/\.asc$/.test(wb['A8'].v)) {
             console.log('parsing by go');
             comments = parseExcelCommentsGo(sheetPath);
         } else {
-            for (i=2; i<= wb['!range'].e.r; i++) {
-                if (wb.hasOwnProperty('A'+i)) {
-                    if (typeof wb['B'+i] === 'undefined') continue;
-                    comments[wb['A'+i].v] = wb['B'+i].v;
-                    // myComments[wb['A'+i].v] = wb['B'+i].v;
-                }
+            for (i=2; i<=ulimit; i++) {
+                if (!wb.hasOwnProperty('A'+i)) continue;
+                if (typeof wb['B'+i] === 'undefined') continue;
+                comments[wb['A'+i].v] = wb['B'+i].v
             }
         }
         return comments;

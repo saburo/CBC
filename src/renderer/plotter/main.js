@@ -28,7 +28,7 @@ var pt = require('../common/plot2');
 
 var configFileName = 'edu.wiscsims.cbc.json';
 var defWinSize = remote.getGlobal('defaultWindowSize');
-var defaultDir = "";
+var defaultDir = "D:\\IMS\\cips_data\\data";
 var myPath = '';
 var myExcelFile;
 var configPath = path.join(app.getPath('userData'), configFileName);
@@ -70,6 +70,7 @@ ipcRenderer.on('focus-search', function() {
 var updateFileList = function(myDir, myExcel, cb) {
     fs.readdir(myDir, function(err, list) {
         $('#asc-list').html('<li class="asc-file">Loading...</li>');
+        console.log('myExcel', myExcel);
         var ExcelCommentFlag = 1,
             myListItems = [],
             ascList = getASCList(list),
@@ -84,13 +85,22 @@ var updateFileList = function(myDir, myExcel, cb) {
         allData = [];
         // console.log('excelComments', excelComments);
         for (i in ascList) {
-            if (ps.init(fs.readFileSync(path.join(myDir, ascList[i]), 'utf8'))) {
+            try {
+                ps.init(fs.readFileSync(path.join(myDir, ascList[i]), 'utf8'));
                 tmp = ps.parseAll();
                 allData.push(tmp);
-                // console.log(tmp.anaParams['Sec.Anal.pressure (mb)']);
-            } else {
-              console.log('Error: parseAll');
             }
+            catch (e) {
+                alert("Error: parse .asc file (" + ascList[i] + ")");
+                // console.log('Error: parseAll; ');
+            }
+            // if (ps.init(fs.readFileSync(path.join(myDir, ascList[i]), 'utf8'))) {
+            //     tmp = ps.parseAll();
+            //     allData.push(tmp);
+            //     // console.log(tmp.anaParams['Sec.Anal.pressure (mb)']);
+            // } else {
+            //   console.log('Error: parseAll');
+            // }
             content = [];
             // console.log("asc: %s, hasOwn: %s", ascList[i], excelComments.hasOwnProperty(ascList[i]));
             if (excelComments.hasOwnProperty(ascList[i])) {
@@ -175,7 +185,7 @@ var getASCList = function(list) {
 };
 
 var getExcelCommentList = function(list, excelPath) {
-    var pattern = /\.xlsx?$/;
+    var pattern = /^[^\~].*\.xlsx?$/;
     var mySpreadSheet = [];
     var sheetIndex = -1;
     var wb = '';
@@ -191,6 +201,7 @@ var getExcelCommentList = function(list, excelPath) {
         wb = XLS.readFile(sheetPath).Sheets.Sum_table;
         var ulimit = 0;
         if (/\.xlsx$/.test(sheetPath)) {
+            console.log(sheetPath);
         // new excel format (.xlsx)
             ulimit = /(\d+)$/.exec(wb['!ref'])[1] / 1
         } else {
@@ -230,12 +241,11 @@ var getExcelCommentList = function(list, excelPath) {
     };
 
     excelMultiFlag = [];
-
-    if (excelPath === undefined) {
+    if (typeof excelPath === 'undefined') {
         mySpreadSheet = list.filter(function(f) {
             if (f.match(pattern)) {
                 sheetIndex = XLS.readFile(path.join(myPath, f))
-                .SheetNames.indexOf('Sum_table');
+                                .SheetNames.indexOf('Sum_table');
                 if (sheetIndex >= 0) return true;
             }
             return false;
@@ -436,7 +446,15 @@ var updatePlot = function(fileName, comm, mask) {
     if (fileName) {
         fs.readFile(path.join(myPath, fileName), 'utf8', function(err, data) {
             if (err) throw err;
-            p = ps.parseAsc(data);
+            console.log('error:', err);
+            try {
+                p = ps.parseAsc(data);
+            } 
+            catch (e) {
+                pt.errorDraw("#myPlot", fileName);
+                alert('Couldn\'t parse asc file');
+                return
+            }
             if (comm) pt.comment(comm);
             if (sigD) Object.keys(sigD).map(function(key, i) {
                 pt.significantDigit(key, sigD[key]);

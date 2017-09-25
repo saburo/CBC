@@ -303,6 +303,16 @@ module.exports = function () {
 	};
 
 	// ===========================================================================
+	my.errorDraw = function(target, txt) {
+		svg = d3.select(target);
+		txt = 'Error: ' + txt;
+		svg.html('').append('g').append('text').html(txt).attr({
+			'font-size': '28px',
+			'text-anchor': 'start',
+			fill: 'red',
+			transform: 'translate(100, 50)',
+		});
+	}
 	my.draw = function(target) {
 		my.checkMultiDelta();
 		svg = d3.select(target);

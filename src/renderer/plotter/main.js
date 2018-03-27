@@ -11,20 +11,20 @@ global.browserWindow = remote;
 require('./menu');
 
 var XLS = require('xlsx-browerify-shim');
-global.$ = require('jquery');
-global.jQuery = global.$;
+
+global.jQuery = global.$ = require('jquery');
+require('jquery-ui-bundle');
 
 global.myDebug = null;
 
-require('jquery-ui');
-
-
-var bootstrap = require('bootstrap');
 var base64 = require('urlsafe-base64');
 
 var ps = require('../common/asc_parser3');
-    // pt = require('../common/plot');
+// pt = require('../common/plot');
 var pt = require('../common/plot2');
+
+
+var bootstrap = require('bootstrap');
 
 var configFileName = 'edu.wiscsims.cbc.json';
 var defWinSize = remote.getGlobal('defaultWindowSize');
@@ -335,8 +335,11 @@ var getConfigs = function(isosys) {
         plottypes: ['cps','delta'],
         averages: ['cps','delta'],
     };
+    const rangesDefault = {'cps': 0, 'hydride': 0, 'delta': 4, 'capDelta': 0};
+    defaults['ranges'] = rangesDefault;
     try {
         tmp = JSON.parse(fs.readFileSync(configPath,'utf8'));
+        console.log('tmp: ', tmp);
         // if (tmp[isosys] !== undefined) out = tmp[isosys];
     } catch(e) {
         // no configure file
@@ -346,6 +349,7 @@ var getConfigs = function(isosys) {
     if (isosys) {
         // specified isotope system
         if (!tmp.hasOwnProperty(isosys)) {
+        return defaults;
             out = defaults;
         } else {
             out = tmp[isosys];
@@ -356,7 +360,7 @@ var getConfigs = function(isosys) {
         if (tmp.hasOwnProperty('titles')) tmp = {};
         out = tmp;
     }
-
+    out['ranges'] = tmp.ranges;
     return out;
 };
 
@@ -384,6 +388,10 @@ var loadConfig = function() {
     $('#configModal input').prop('checked', false);
     $('.averages input').prop('disabled', true);
     $.each(getConfigs(isosys), function(key, v) {
+        if (key === 'ranges') {
+            $.each(v, (k, vv) => $('yrange_' + k).val(vv));
+            return;
+        };
         v.map(function(i) { setConfig(key, i); });
     });
 };
@@ -392,6 +400,24 @@ var saveConfig = function(conf) {
     var isosys = getIsoSys();
     var tmp = getConfigs();
     tmp[isosys] = parseConfig();
+    fs.writeFile(configPath, JSON.stringify(tmp), 'utf8', function(err) {
+        if (err) throw err;
+        updatePlot();
+    });
+};
+
+const saveConfigRange = () => {
+    const yrange_cps = $('#yrange_cps').val();
+    const yrange_hydride = $('#yrange_hydride').val();
+    const yrange_delta = $('#yrange_delta').val();
+    const yrange_capDelta = $('#yrange_capDelta').val();
+    var tmp = getConfigs();
+    tmp['ranges'] = {
+        'cps': yrange_cps,
+        'hydride': yrange_hydride,
+        'delta': yrange_delta,
+        'capDelta': yrange_capDelta,
+    };
     fs.writeFile(configPath, JSON.stringify(tmp), 'utf8', function(err) {
         if (err) throw err;
         updatePlot();
@@ -439,14 +465,22 @@ var updatePlot = function(fileName, comm, mask) {
         'cps': isoConfig.cps['decimal-place'],
         'capDelta': isoConfig.capDelta === undefined ? 0 : isoConfig.capDelta['decimal-place'],
     }
-    // config.averages.push('cps');
+    var myRng = {
+        'cps': config.ranges.cps,
+        'hydride': config.ranges.hydride,
+        'delta': config.ranges.delta,
+        'capDelta': config.ranges.capDelta
+    }
     pt.plottype(config.plottypes)
         .average(intersect(config.averages, config.plottypes))
         .title(config.titles);
+    $.each(myRng, (k, v) => {
+        pt.yRange(k, Number(v))
+    });
     if (fileName) {
         fs.readFile(path.join(myPath, fileName), 'utf8', function(err, data) {
             if (err) throw err;
-            console.log('error:', err);
+            // console.log('error:', err);
             try {
                 p = ps.parseAsc(data);
             } 
@@ -752,7 +786,7 @@ var movePrev = function() {
 };
 
 var getIsoSys = function() {
-    var li = $('.current') ? $('.current') : $('.asc-file').first();
+    var li = $('.current').length ? $('.current') : $('.asc-file').first();
     return li.attr('data-isosys');
 }
 
@@ -861,6 +895,18 @@ $('#cancel-config-btn').on('click', function() {
     initConfigInputs();
 });
 
+// configure plot ranges
+$('#yrange').on('click', function() {
+    const tmp = getConfigs();
+    $.each(tmp.ranges, (k, v) => $('#yrange_' + k).val(v));
+    $('#configRangeModal').modal('show');
+});
+
+$('#saveConfigRange').on('click', function() {
+    saveConfigRange();
+    $('#configRangeModal').modal('hide');
+});
+
 // export config
 $('#print-btn').on('click', function() {
     var fmt = $('.format > input:checked').val();
@@ -914,7 +960,7 @@ $('#configModal, #exportModal').draggable({
     handle: ".modal-header"
 });
 // var tmp = '/Users/saburo/Desktop/DATA/20140624_d18O_garnet_stds_Kouki';
-// var tmp = '/Users/saburo/Desktop/Data/data_asc_only';
+myPath = '/Users/saburo/Desktop/20180320_d18O_BowmanJones'
 // var tmp = '/Users/saburo/Desktop/Sub-Maciej';
 // var tmp = getDataDir();
 

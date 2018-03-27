@@ -20,6 +20,12 @@ module.exports = function () {
 		maskedData = [],
 		circleSize = 4,
 		myPlot = {},
+		yRange = {
+			'cps': 0,
+			'hydride': 0,
+			'delta': 0,
+			'capDelta': 0
+		},
 		significantDigit = {
 			'cps':      d3.format('0.3f'),
 			'hydride':  d3.format('0.4f'),
@@ -71,6 +77,19 @@ module.exports = function () {
 		}
 		return my;
 	};
+
+	my.yRange = function(plottype, rng) {
+		console.log('yRange arg len: ', arguments.length);
+		if (!arguments.length) return yRnage;
+		if (arguments.length === 1) return yRange[plottype];
+		if (typeof rng === "number") {
+			yRange[plottype] = rng;
+		} else if (isNaN(rng)) {
+			yRange[plottype] = 0;
+		}
+
+		return my;
+	}
 
 	my.significantDigit = function(plottype, sd) {
 		if (!arguments.length) return significantDigit;
@@ -368,21 +387,27 @@ module.exports = function () {
 		for (var i in plottypes) {
 			t = plottypes[i];
 			// Create scales
+			var myTempRange = [];
+			if (my.yRange(t)) {
+				myTempRange = getFixedRange(t, my.yRange(t));
+			} else {
+				myTempRange = getRange(t);
+			}
 			myScale[t] = {
 				x: d3.scale.linear().domain([0, data.cycleNumber + 1]).range([0, width]),
-				y: d3.scale.linear().domain(getRange(t)).range([height, 0])
+				y: d3.scale.linear().domain(myTempRange).range([height, 0])
 			};
 			myScale.x = myScale[t].x;
 			// Create plot frame
 			x = margin.left; y = (margin.top/1 + i * height/1);
 			// create clip path
-			clipBoxes.append('clipPath').attr('id', 'clipPath' + t)
-					.append('rect').attr({
-						width: width,
-						height:height,
-						// transform: "translate(" + x + "," + y + ")"
-						transform: "translate(0,0)"
-					});
+			// clipBoxes.append('clipPath').attr('id', 'clippath' + t)
+			// 		.append('rect').attr({
+			// 			width: width,
+			// 			height:height,
+			// 			transform: "translate(" + x + "," + y + ")"
+			// 			// transform: "translate(0,0)"
+			// 		});
 			myPlot[t] = container.append('g').classed('plot ' + t, true)
 					.attr({
 						transform: "translate(" + x + "," + y + ")",
@@ -404,6 +429,14 @@ module.exports = function () {
 					"text-anchor": "middle",
 				}).html(config.labels[t]);
 
+			// create clip path
+			myPlot[t].append('clipPath').attr('id', 'clippath' + t)
+			.append('rect').attr({
+				width: width,
+				height: height,
+				// transform: "translate(" + x + "," + y + ")"
+				transform: "translate(0,0)"
+			});
 			// Create line and point frame
 			myPlot[t].append('g').classed('line', true);
 			myPlot[t].append('g').classed('point', true);
@@ -692,7 +725,8 @@ module.exports = function () {
 				.attr({
 					d: lineGen(filterMaskedData()),
 					stroke: t==='cps' ? config.color[t][v] : config.color[t],
-					'stroke-width': 1, fill: 'none'
+					'stroke-width': 1, fill: 'none',
+					'clip-path': "url(#clippath" + t + ")",
 				});
 		});
 	};
@@ -706,7 +740,7 @@ module.exports = function () {
 					cy: function(d) { return myScale[t].y(t==='cps' ? d.cps[v] : d[t]); },
 					r: size||7, stroke: 'none',
 					fill: t==='cps' ? config.color[t][v] : config.color[t],
-					"clip-path": "url(#clipPath" + t + ")",
+					"clip-path": "url(#clippath" + t + ")",
 				});
 		});
 	};
@@ -933,7 +967,29 @@ module.exports = function () {
 				ret = txt.replace(' ', '').replace(pa1, re1).replace(pa2,re2).replace(pa3,re3);
 		return '<tspan>' + ret + '</tspan>';
 	};
+	var getFixedRange = (dataType, span) => {
+		var values = [],
+			myKeys = [],
+			i = 0,
+			k = 0;
+		var dd = filterMaskedData();
+		if (dataType === 'cps') {
+			myKeys = d3.keys(dd[0].cps);
+			for (i = 0; i < dd.length; i++) {
+				for (k in myKeys) {
+					values.push(dd[i].cps[myKeys[k]]);
+				}
+			}
+		} else {
+			dd.forEach(function (v, i) {
+				values.push(dd[i][dataType]);
+			});
+		}
 
+		var med = d3.median(values);
+		var mea = d3.mean(values);
+		return [med - span/2, med + span/2];
+	};
 	var getRange = function(dataType, plotYMargin) {
 		// plotYMargin [%]
 		var values = [],

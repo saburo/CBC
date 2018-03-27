@@ -24,6 +24,10 @@
       <span style="font-size: 26px; color: white;" class="glyphicon glyphicon-cog"></span>
     </div>
 
+    <div class="pull-right toolbar-btn yrange-btn" style="" id="yrange" title="Configure Y-axis">
+      <span style="font-size: 26px; color: white;" class="glyphicon glyphicon-resize-vertical"></span>
+    </div>
+
     <div class="pull-right toolbar-btn export-btn" style="" id="exportas" title="Export As…">
       <span style="font-size: 26px; color: white;" class="glyphicon glyphicon-save"></span>
     </div>
@@ -233,6 +237,58 @@
     </div>
   </div>
   <!-- /config -->
+
+  <!-- config-range -->
+
+  <style>
+    .txt-right { text-align: right; }
+  </style>
+  <div id="configRangeModal" class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog modal-sm" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" id="myModalLabel">Y-axis Ranges</h4>
+          <h5 class="modal-subtitle">0 = auto</h5>
+        </div>
+        <div class="modal-body">
+          <form class="form-horizontal">
+            <div class="form-group">
+              <label for="yrange_cps" class="col-xs-6 txt-right">cps: </label>
+              <div class="col-xs-6">
+                <input type="text" class="form-control" id="yrange_cps" placeholder="auto" value="">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="yrange_hydride" class="col-xs-6 txt-right">hydride: </label>
+              <div class="col-xs-6">
+                <input type="text" class="form-control" id="yrange_hydride" placeholder="auto" value="">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="yrange_delta" class="col-xs-6 txt-right">delta: </label>
+              <div class="col-xs-6">
+                <input type="text" class="form-control" id="yrange_delta" placeholder="auto" value="">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="yrange_capDelta" class="col-xs-6 txt-right">capital delta: </label>
+              <div class="col-xs-6">
+                <input type="text" class="form-control" id="yrange_capDelta" placeholder="auto" value="">
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button id="saveConfigRange" type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- /config-range -->
   <script>require('./main')</script>
 </body>
 </html>

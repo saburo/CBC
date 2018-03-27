@@ -7,7 +7,7 @@
   "main": "./src/browser/main.js",
   "devDependencies": {
     "devtron": "^1.4.0",
-    "electron": "^1.6.0",
+    "electron": "^1.8.0",
     "electron-builder": "^14.5.1",
     "electron-packager": "^5.2.1",
     "mocha": "^2.3.4",
@@ -16,8 +16,8 @@
   "dependencies": {
     "bootstrap": "^3.3.5",
     "d3": "^3.5.6",
-    "jquery": "^3.0.0",
-    "jquery-ui": "^1.12.0",
+    "jquery": "^3.3.1",
+    "jquery-ui-bundle": "^1.12.1-migrate",
     "urlsafe-base64": "^1.0.0",
     "xlsx-browerify-shim": "0.0.2"
   },
@@ -29,7 +29,7 @@
     "pack:osx": "electron-builder \"../dist/CBC-darwin-x64/CBC.app\" --platform=osx --out=\"../installer/osx\" --config=packager.json",
     "dist": "build -mw",
     "start": "electron .",
-    "dev": "DEV_ENV=development yarn start",
+    "dev": "DEV_ENV=development npm start",
     "test": "mocha"
   },
   "build": {

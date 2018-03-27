@@ -79,7 +79,6 @@ module.exports = function () {
 	};
 
 	my.yRange = function(plottype, rng) {
-		console.log('yRange arg len: ', arguments.length);
 		if (!arguments.length) return yRnage;
 		if (arguments.length === 1) return yRange[plottype];
 		if (typeof rng === "number") {

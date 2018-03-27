@@ -70,7 +70,7 @@ ipcRenderer.on('focus-search', function() {
 var updateFileList = function(myDir, myExcel, cb) {
     fs.readdir(myDir, function(err, list) {
         $('#asc-list').html('<li class="asc-file">Loading...</li>');
-        console.log('myExcel', myExcel);
+        // console.log('myExcel', myExcel);
         var ExcelCommentFlag = 1,
             myListItems = [],
             ascList = getASCList(list),
@@ -339,8 +339,6 @@ var getConfigs = function(isosys) {
     defaults['ranges'] = rangesDefault;
     try {
         tmp = JSON.parse(fs.readFileSync(configPath,'utf8'));
-        console.log('tmp: ', tmp);
-        // if (tmp[isosys] !== undefined) out = tmp[isosys];
     } catch(e) {
         // no configure file
         console.log('error: reading ' + configPath);

@@ -16,7 +16,7 @@
   "dependencies": {
     "bootstrap": "^3.3.5",
     "d3": "^3.5.6",
-    "jquery": "^3.3.1",
+    "jquery": "^3.4.0",
     "jquery-ui-bundle": "^1.12.1-migrate",
     "urlsafe-base64": "^1.0.0",
     "xlsx-browerify-shim": "0.0.2"

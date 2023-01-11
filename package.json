@@ -8,9 +8,9 @@
   "devDependencies": {
     "devtron": "^1.4.0",
     "electron": "^1.8.0",
-    "electron-builder": "^14.5.1",
+    "electron-builder": "^23.6.0",
     "electron-packager": "^5.2.1",
-    "mocha": "^2.3.4",
+    "mocha": "^10.2.0",
     "rcedit": "^0.7.0"
   },
   "dependencies": {
